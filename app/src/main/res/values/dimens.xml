@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="floating_button_size">50dp</dimen>
+
+    <dimen name="login_card_margin">10dp</dimen>
+    <dimen name="login_padding">10dp</dimen>
+
+    <dimen name="progress_bar_size">42dp</dimen>
+    <dimen name="progress_bar_login_margin">100dp</dimen>
+</resources>

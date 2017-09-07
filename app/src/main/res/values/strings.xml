@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ubnav</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="select_location">Select location or put new location on the map.</string>
+    <string name="hint_email">Email Address</string>
+    <string name="hint_password">Password</string>
+    <string name="login_button">Login</string>
+    <string name="fail_login">Unable to login, check your email and password.</string>
+    <string name="cant_edit">You can\'t edit path in view mode.</string>
+
+    <string name="node_path">path</string>
+    <string name="node_location">location</string>
+</resources>
