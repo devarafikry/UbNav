@@ -6,16 +6,22 @@ import devfikr.skripsi.ubnav.model.LatLng;
  */
 
 public class Path {
+    String id;
     LatLng startLocation;
     LatLng endLocation;
 
-    public Path(LatLng startLocation, LatLng endLocation) {
+    public Path(String id, LatLng startLocation, LatLng endLocation) {
+        this.id = id;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
     }
 
-    public Path() {
+    public String getId() {
+        return id;
+    }
 
+    public void setId(String id) {
+        this.id = id;
     }
 
     public LatLng getStartLocation() {

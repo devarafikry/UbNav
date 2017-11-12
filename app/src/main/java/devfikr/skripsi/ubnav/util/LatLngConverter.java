@@ -15,8 +15,8 @@ public class LatLngConverter {
         return latLng;
     }
 
-    public static devfikr.skripsi.ubnav.model.LatLng convertToLocalLatLng(LatLng googleLatLng){
-        devfikr.skripsi.ubnav.model.LatLng latLng = new devfikr.skripsi.ubnav.model.LatLng(
+    public static devfikr.skripsi.ubnav.model.LatLng convertToLocalLatLng(String id,LatLng googleLatLng){
+        devfikr.skripsi.ubnav.model.LatLng latLng = new devfikr.skripsi.ubnav.model.LatLng(id,
                 googleLatLng.latitude,
                 googleLatLng.longitude
         );

@@ -18,9 +18,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <android.support.design.widget.FloatingActionButton
+            android:src="@drawable/ic_save_white"
+            android:id="@+id/fab_save"
+            app:backgroundTint="@android:color/holo_red_light"
+            android:onClick="exitWatchPath"
+            android:visibility="visible"
+            android:layout_margin="10dp"
+            android:layout_width="@dimen/floating_button_size"
+            android:layout_height="@dimen/floating_button_size"/>
+        <android.support.design.widget.FloatingActionButton
             android:src="@drawable/ic_create"
             android:id="@+id/fab_create_path"
             android:onClick="createPath"
+            android:visibility="gone"
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
@@ -29,7 +39,7 @@
             android:src="@drawable/ic_watch"
             android:id="@+id/fab_watch_path"
             android:onClick="watchPath"
-            android:visibility="visible"
+            android:visibility="gone"
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>

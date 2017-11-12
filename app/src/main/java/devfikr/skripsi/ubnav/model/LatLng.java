@@ -5,6 +5,7 @@ package devfikr.skripsi.ubnav.model;
  */
 
 public class LatLng {
+    String id;
     double latitude;
     double longitude;
 
@@ -12,9 +13,18 @@ public class LatLng {
 
     }
 
-    public LatLng(double latitude, double longitude) {
+    public LatLng(String id, double latitude, double longitude) {
+        this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public double getLatitude() {
