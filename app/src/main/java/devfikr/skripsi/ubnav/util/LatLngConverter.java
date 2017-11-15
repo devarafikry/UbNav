@@ -2,24 +2,26 @@ package devfikr.skripsi.ubnav.util;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import devfikr.skripsi.ubnav.model.Point;
+
 /**
  * Created by Fikry-PC on 9/6/2017.
  */
 
 public class LatLngConverter {
-    public static LatLng convertToGoogleLatLng(devfikr.skripsi.ubnav.model.LatLng localLatLng){
+    public static LatLng convertToGoogleLatLng(Point localPoint){
         LatLng latLng = new LatLng(
-                localLatLng.getLatitude(),
-                localLatLng.getLongitude()
+                localPoint.getLatitude(),
+                localPoint.getLongitude()
         );
         return latLng;
     }
 
-    public static devfikr.skripsi.ubnav.model.LatLng convertToLocalLatLng(String id,LatLng googleLatLng){
-        devfikr.skripsi.ubnav.model.LatLng latLng = new devfikr.skripsi.ubnav.model.LatLng(id,
+    public static Point convertToLocalLatLng(long id, LatLng googleLatLng){
+        Point point = new Point(id,
                 googleLatLng.latitude,
                 googleLatLng.longitude
         );
-        return latLng;
+        return point;
     }
 }

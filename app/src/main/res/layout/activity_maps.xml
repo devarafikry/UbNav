@@ -17,45 +17,19 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <!--<android.support.design.widget.FloatingActionButton-->
+            <!--android:src="@drawable/ic_save_white"-->
+            <!--android:id="@+id/fab_save"-->
+            <!--app:backgroundTint="@android:color/holo_red_light"-->
+            <!--android:onClick="exitWatchPath"-->
+            <!--android:visibility="visible"-->
+            <!--android:layout_margin="10dp"-->
+            <!--android:layout_width="@dimen/floating_button_size"-->
+            <!--android:layout_height="@dimen/floating_button_size"/>-->
         <android.support.design.widget.FloatingActionButton
-            android:src="@drawable/ic_save_white"
-            android:id="@+id/fab_save"
-            app:backgroundTint="@android:color/holo_red_light"
-            android:onClick="exitWatchPath"
-            android:visibility="visible"
-            android:layout_margin="10dp"
-            android:layout_width="@dimen/floating_button_size"
-            android:layout_height="@dimen/floating_button_size"/>
-        <android.support.design.widget.FloatingActionButton
-            android:src="@drawable/ic_create"
-            android:id="@+id/fab_create_path"
-            android:onClick="createPath"
-            android:visibility="gone"
-            android:layout_margin="10dp"
-            android:layout_width="@dimen/floating_button_size"
-            android:layout_height="@dimen/floating_button_size"/>
-
-        <android.support.design.widget.FloatingActionButton
-            android:src="@drawable/ic_watch"
-            android:id="@+id/fab_watch_path"
-            android:onClick="watchPath"
-            android:visibility="gone"
-            android:layout_margin="10dp"
-            android:layout_width="@dimen/floating_button_size"
-            android:layout_height="@dimen/floating_button_size"/>
-        <android.support.design.widget.FloatingActionButton
-            android:src="@drawable/ic_watch"
-            android:id="@+id/fab_exit_watch_path"
-            app:backgroundTint="@android:color/holo_red_light"
-            android:onClick="exitWatchPath"
-            android:visibility="gone"
-            android:layout_margin="10dp"
-            android:layout_width="@dimen/floating_button_size"
-            android:layout_height="@dimen/floating_button_size"/>
-
-        <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
             android:src="@drawable/ic_undo"
-            android:visibility="gone"
+            android:visibility="visible"
             app:backgroundTint="@color/colorPrimary"
             android:id="@+id/fab_undo"
             android:onClick="undoPath"
@@ -63,8 +37,9 @@
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
         <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
             android:src="@drawable/ic_redo"
-            android:visibility="gone"
+            android:visibility="visible"
             app:backgroundTint="@color/colorPrimary"
             android:id="@+id/fab_redo"
             android:onClick="redoPath"
@@ -72,24 +47,35 @@
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
         <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
             android:src="@drawable/ic_insert_node"
-            android:visibility="gone"
+            android:visibility="visible"
             app:backgroundTint="@color/colorPrimary"
             android:id="@+id/fab_edit_status"
-            android:onClick="changeEditor"
+            android:onClick="addPointBetweenPath"
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
         <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
             android:src="@drawable/ic_clear"
-            android:visibility="gone"
+            android:visibility="visible"
             app:backgroundTint="@android:color/holo_red_dark"
             android:id="@+id/fab_clear"
-            android:onClick="clearPath"
+            android:onClick="deletePoint"
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
-
+        <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
+            android:src="@drawable/ic_reset"
+            android:visibility="visible"
+            app:backgroundTint="@android:color/holo_red_dark"
+            android:id="@+id/fab_reset"
+            android:onClick="resetPath"
+            android:layout_margin="10dp"
+            android:layout_width="@dimen/floating_button_size"
+            android:layout_height="@dimen/floating_button_size"/>
     </LinearLayout>
 
     <Button
