@@ -1,12 +1,10 @@
 package devfikr.skripsi.ubnav;
 
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -27,9 +25,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -50,7 +45,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.OnMapClickListener,
         GoogleMap.OnPolylineClickListener,
         GoogleMap.OnMarkerDragListener,
-        GoogleMap.OnMarkerClickListener{
+        GoogleMap.OnMarkerClickListener,
+        AddCommandCallback,
+        DeleteCommandCallback,
+        UpdateCommandCallback,
+        AddPointBetweenPathCallback{
 
     DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
 
@@ -91,6 +90,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LoaderManager.LoaderCallbacks<Cursor> pathsLoaderCallback;
     private int LOADER_POINT_ID = 22;
     private int LOADER_PATH_ID = 33;
+
+    private CommandManager commandManager;
     @BindView(R.id.btn_finish)
     Button btn_finish;
     @BindView(R.id.root_map)
@@ -112,63 +113,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private long selectedPolylineId;
     private Point polylineStartPoint;
 
-    private long deletePathFromDb(long id){
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        return db.delete(DatabaseContract.TABLE_PATHS, "_id="+id, null);
-    }
-
-    private long deletePointFromDb(long id){
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        return db.delete(DatabaseContract.TABLE_POINTS, "_id="+id, null);
-    }
-
-    private long updatePointToDb(long id, LatLng latLng){
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(DatabaseContract.PointColumns.COLUMN_LAT,latLng.latitude);
-        cv.put(DatabaseContract.PointColumns.COLUMN_LNG,latLng.longitude);
-        cv.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 0);
-        return db.update(DatabaseContract.TABLE_POINTS, cv, "_id="+id, null);
-    }
-
-    private long insertPointToDb(LatLng latLng){
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(DatabaseContract.PointColumns.COLUMN_LAT,latLng.latitude);
-        cv.put(DatabaseContract.PointColumns.COLUMN_LNG,latLng.longitude);
-        cv.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 0);
-        return db.insert(DatabaseContract.TABLE_POINTS, null, cv);
-    }
-
-    private long insertPathToDb(long startPointId, long endPointId){
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(DatabaseContract.PathColumns.COLUMN_START_POINT,startPointId);
-        cv.put(DatabaseContract.PathColumns.COLUMN_END_POINT,endPointId);
-        cv.put(DatabaseContract.PathColumns.COLUMN_CATEGORY, 0);
-        return db.insert(DatabaseContract.TABLE_PATHS, null, cv);
-    }
-
     private void showMessage(String s){
         if(mToast != null){
             mToast.cancel();
         }
         mToast = Toast.makeText(this, s, Toast.LENGTH_SHORT);
         mToast.show();
-    }
-
-    private void addHistory(int id, LatLng latLng){
-        CreateHistory createHistory = new CreateHistory(id, latLng);
-        undo_history.add(createHistory);
-    }
-    private void addHistory(){
-        CreateHistory createHistory = null;
-        undo_history.add(createHistory);
-    }
-
-    private void addRedoHistory(int id, LatLng latLng){
-        CreateHistory createHistory = new CreateHistory(id, latLng);
-        redo_history.add(createHistory);
     }
 
     private void switchState(int i){
@@ -208,6 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initPointsLoaderCallback();
         initPathsLoaderCallback();
 
+        commandManager = new CommandManager();
     }
 
     private void initPointsLoaderCallback(){
@@ -346,43 +297,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    private void addPath(long pathId, Point startPosition,
-                         Point endPosition){
-        Path path = new Path(pathId,startPosition,
-                endPosition
-                );
-        paths.add(path);
-    }
-
-    private long generatePathId(){
-        return 1;
-    }
-
-    private long generateLatLngId(){
-        return 1;
-    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-//        addGerbangVeteran();
-        // Add a marker in Sydney and move the camera
-
-
-//        Point gerbangVeteranKeluar = new Point(-7.956165, 112.613413);
-//        locations.add(gerbangVeteranKeluar);
-//        mMap.addMarker(new MarkerOptions().position(gerbangVeteranKeluar).title("Gerbang Veteran Keluar")
-//                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(gerbangVeteranKeluar,15));
         getSupportLoaderManager().restartLoader(LOADER_POINT_ID, null, pointsLoaderCallback);
         mMap.setOnMapClickListener(this);
         mMap.setOnPolylineClickListener(this);
         mMap.setOnMarkerDragListener(this);
         mMap.setOnMarkerClickListener(this);
-    }
-
-    private void insertNode(int id, LatLng latLng){
-
     }
 
     private void addPointMarker(Point point, long latlngid, boolean isSelected){
@@ -402,21 +325,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.setTag(latlngid);
     }
 
-    private void addPoint(LatLng latLng){
-        Point addedPoint = new Point(insertPointToDb(latLng), latLng.latitude, latLng.longitude);
-        points.add(addedPoint);
-        latlngsNormalSize = points.size();
-    }
 
-    private void updatePoint(long selectedPointId, LatLng position) {
-        Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
-        updatePointToDb(selectedPointId, position);
-        for (int i =0;i<points.size();i++){
-            if (points.get(i).getId() == selectedPointId){
-                points.set(i, updatedPoint);
-            }
-        }
-    }
 
     private void addVisualLatLng(long id,LatLng latLng){
         Point addedPoint =
@@ -431,89 +340,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(selectedPosition == null){
                 SnackbarUtil.showSnackBar(root_map, snackbar,"Pilih point terlebih dahulu.", Snackbar.LENGTH_LONG);
             } else{
-                addPoint(latLng);
-                Point addedPoint = points.get(points.size()-1);
-                addPath(insertPathToDb(selectedPosition.getId(), addedPoint.getId()),
-                        selectedPosition, addedPoint);
-                addPointMarker(addedPoint, addedPoint.getId(), true);
-                selectedPosition = addedPoint;
+//                addPoint(latLng);
+                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng));
 
-                generatePoint();
             }
         } else if(isEditPolyline){
             long id = (long)selectedPolyline.getTag();
             Path selectedPath = null;
             for (Path path : paths){
-                if (path.getId() == id){
+                if(path.getId() == id){
                     selectedPath = path;
-                    paths.remove(path);
-                    break;
                 }
             }
-            deletePathFromDb(id);
-            addPoint(latLng);
-            Point addedPoint = points.get(points.size()-1);
-
-            //insert path 1
-            addPath(insertPathToDb(selectedPath.getStartLocation().getId(),
-                    addedPoint.getId()),
-                    selectedPath.getStartLocation(), addedPoint);
-            //insert path 2
-            addPath(insertPathToDb(addedPoint.getId(),
-                    selectedPath.getEndLocation().getId()),
-                    addedPoint, selectedPath.getEndLocation());
-            selectedPosition = addedPoint;
-            switchState(EDIT_NODE);
-            generatePoint();
-//            showMessage(String.valueOf(id));
-//            selectedPolylineId = (long)polyline.getTag();
-//        polylineStartPoint = polyline.getPoints().get(0);
-//            selectedPolyline = polyline;
-//            selectedPolyline.setTag(id);
+//            addPointBetweenPath(selectedPath);
+            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng));
+//            switchState(EDIT_NODE);
+//            generatePoint();
         }
 
-
-//        if(isCreateNewPath){
-//            mMap.clear();
-//            if(isEditPolyline){
-//                    if (isInsertNewNode) {
-//                        int id = editedPolylineId+1;
-//                        locations.add(id, latLng);
-//                        generatePoint();
-//                        isEditPolyline = false;
-//                        Log.e("Dafuq e", "Found @ "+latLng.latitude+" "+latLng.longitude);
-//                    }
-//                    else if(isDragPath){
-//                        addRedoHistory(editedPolylineId, latLng);
-//                        locations.set(editedPolylineId, latLng);
-//                        generatePoint();
-//                        isEditPolyline = false;
-//                    }
-//                    else if(isDeletePath){
-//                        locations.remove(editedPolylineId);
-//                        isEditPolyline = false;
-//                        generatePoint();
-//                    }
-////                }
-//
-//            }
-//            else{
-//                addHistory();
-////            mMap.addMarker(new MarkerOptions().position(latLng).title("New Marker")
-////            .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_point)));
-//
-//                Path path = new Path(LatLngConverter.convertToLocalLatLng(selectedNode),
-//                        LatLngConverter.convertToLocalLatLng(latLng));
-//                paths.add(path);
-//                selectedNode = latLng;
-//                generatePoint();
-//            }
-//
-////            polyline.setWidth(POLYLINE_STROKE_WIDTH_PX);
-////            polyline.setColor(COLOR_BLACK_ARGB);
         }
-
-//    }
 
     private void generatePoint(){
         mMap.clear();
@@ -605,88 +450,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        polylineStartPoint = polyline.getPoints().get(0);
         selectedPolyline = polyline;
         selectedPolyline.setTag(id);
-        addHistory(editedPolylineId, editedLatLng);
         polyline.setClickable(true);
         polyline.setStartCap(new CustomCap(
                 BitmapDescriptorFactory.fromResource(R.drawable.ic_round_green), 20));
         polyline.setColor(getResources().getColor(R.color.colorAccent));
-//        if(isEditPolyline == false){
-//
-//        } else{
-//            if(id == editedPolylineId){
-//                Timber.d("Lat :"+polyline.getPoints().get(0).latitude+" Lng :"+polyline.getPoints().get(0).longitude);
-//            }
-//        }
     }
-
-//    public void undoPath(View view) {
-//        if(undo_history != null){
-//            int lastIdHistory = undo_history.size()-1;
-//            //undo edited path
-//            if(undo_history.get(lastIdHistory) != null){
-//                CreateHistory createHistory = undo_history.get(lastIdHistory);
-//                Timber.d(String.valueOf(createHistory.getIndex()));
-//                locations.set(createHistory.getIndex(), createHistory.getLatLng());
-//                undo_history.remove(lastIdHistory);
-//                generatePoint();
-//            } else{
-//                int lastIdLocation = locations.size()-1; //undo added path
-//                if(locations.size()>1){
-//                    if(locations.get(lastIdLocation) != null){
-//                        CreateHistory createHistory = new CreateHistory(lastIdLocation, locations.get(lastIdLocation));
-//                        redo_history.add(createHistory);
-//                        locations.remove(lastIdLocation);
-//                        generatePoint();
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    public void redoPath(View view) {
-//        if(redo_history != null){
-//            if(redo_history.size()>0){
-//                int redoLastIndex = redo_history.size()-1;
-//                CreateHistory redoHistory = redo_history.get(redoLastIndex);
-//                if(locations.size() <= redoHistory.getIndex()){
-//                    locations.add(redoHistory.getLatLng());
-//                } else{
-//                    locations.set(redoHistory.getIndex(),redoHistory.getLatLng());
-//                }
-////                addHistory(editedPolylineId, editedLatLng);
-//                redo_history.remove(redoLastIndex);
-//                generatePoint();
-//            }
-//        }
-//    }
-
-//    public void clearPath(View view) {
-//        mMap.clear();
-//        isEditPolyline = false;
-//        undo_history.clear();
-//        redo_history.clear();
-//        locations.clear();
-//
-//        Point gerbangVeteranMasuk = new Point(-7.956213, 112.613298);
-//        locations.add(gerbangVeteranMasuk);
-//        mMap.addMarker(new MarkerOptions().position(gerbangVeteranMasuk).title("Gerbang Veteran Masuk")
-//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.gate)));
-//    }
 
 
     @Override
     public void onMarkerDragStart(Marker marker) {
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        long selectedPointId = Long.valueOf(marker.getTag().toString());
+        for (Point point : points){
+            if (point.getId() == selectedPointId){
+                selectedPosition = point;
+            }
+        }
     }
 
     @Override
     public void onMarkerDrag(Marker marker) {
         long selectedPointId = Long.valueOf(marker.getTag().toString());
         Timber.d("Visual Path Size:"+visualPaths.size());
-        int lastPointId = points.size()-1;
+//        int lastPointId = points.size()-1;
 
-        if(points.size()>latlngsNormalSize){
-            points.remove(lastPointId);
+//        if(points.size()>latlngsNormalSize){
+//            points.remove(lastPointId);
+//        }
+        Point draggedPoint = null;
+        for (Point point : points){
+            if (point.getId() == selectedPointId){
+                draggedPoint = point;
+            }
         }
         addVisualLatLng(selectedPointId,marker.getPosition());
 
@@ -695,7 +490,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(path.getStartLocation().getId() == selectedPointId){
                 for (Point point : points){
                     if(point.getId()==selectedPointId){
-                        Point draggedPoint = points.get(lastPointId);
+//                        Point draggedPoint = points.get(lastPointId);
 //                        path.setStartLocation(draggedPoint);
                         Path visualPath = new Path(
                                 path.getId(), draggedPoint, path.getEndLocation());
@@ -706,7 +501,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } else if(path.getEndLocation().getId() ==selectedPointId){
                 for (Point point : points){
                     if(point.getId() == (selectedPointId)){
-                        Point draggedPoint = points.get(lastPointId);
+//                        Point draggedPoint = points.get(lastPointId);
 //                        path.setStartLocation(draggedPoint);
                         Path visualPath = new Path(
                                 path.getId(), path.getStartLocation(), draggedPoint);
@@ -722,45 +517,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMarkerDragEnd(Marker marker) {
         long selectedPointId = Long.valueOf(marker.getTag().toString());
+        selectedMarker = marker;
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
 //        addPoint(marker.getPosition());
         //update point di database
-        updatePoint(selectedPointId, marker.getPosition());
-        switchSelectedMarker(marker);
-        int lastLatLngsId = points.size()-1;
+//        updatePoint(selectedPointId, marker.getPosition());
 
-        if(selectedPosition.getId()== selectedPointId){
-            selectedPosition = points.get(lastLatLngsId);
-        }
-        int i =0;
-        //implementasi kan visualisasi path ke path sebenarnya setelah di geser
-        for (Path path : paths){
-            if(path.getStartLocation().getId()==selectedPointId){
-                for (Point point : points){
-                    if(point.getId()==selectedPointId){
-                        Point draggedPoint = points.get(lastLatLngsId);
-//                        path.setStartLocation(draggedPoint);
-                        Path visualPath = new Path(
-                                path.getId(), draggedPoint, path.getEndLocation());
-                        paths.set(i, visualPath);
-//                        visualPaths.add(visualPath);
-                    }
-                }
-            } else if(path.getEndLocation().getId()==selectedPointId){
-                for (Point point : points){
-                    if(point.getId()==selectedPointId){
-                        Point draggedPoint = points.get(lastLatLngsId);
-//                        path.setStartLocation(draggedPoint);
-                        Path visualPath = new Path(
-                                path.getId(), path.getStartLocation(), draggedPoint);
-                        paths.set(i, visualPath);
-//                        visualPaths.add(visualPath);
-                    }
-                }
-            }
-            i++;
-        }
-        generatePoint();
+        commandManager.doCommand(new UpdatePointCommand(root_map, snackbar, this, mDbHelper, paths, points, selectedPosition,
+                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition()));
+
     }
 
     @Override
@@ -775,6 +540,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
 
         if(selectedMarker != null){
+//            Timber.d("d"+ selectedMarker.getTag().toString());
             if(!(selectedMarker.getTag().toString().equals(marker.getTag().toString()))){
                 selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
             }
@@ -787,55 +553,97 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    //point yang dapat dihapus adalah point yang tidak menjadi startNode pada suatu path
+
     public void deletePoint(View view) {
-        long id = selectedPosition.getId();
-        long idPathToBeDeleted = 0;
-        Path pathToBeDeleted = null;
-        for (Path path : paths){
-            if(path.getStartLocation().getId() ==
-                    id){
-                SnackbarUtil.showSnackBar(root_map, snackbar,
-                        "Anda tidak bisa menghapus node ini", Snackbar.LENGTH_LONG);
-                return;
-            }
+//        deletePoint();
+        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition ));
+    }
 
-            if(path.getEndLocation().getId() ==
-                    id){
-                idPathToBeDeleted = path.getId();
-                pathToBeDeleted = path;
-            }
-        }
-        paths.remove(pathToBeDeleted);
-        points.remove(selectedPosition);
+    private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){
+        this.selectedPosition = selectedPoint;
+        this.points = points;
+        this. paths = paths;
+    }
 
-        selectedPosition = null;
-        selectedMarker = null;
-        deletePathFromDb(idPathToBeDeleted);
-        deletePointFromDb(id);
+    @Override
+    public void addCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
+        updateValue(points, paths, selectedPoint);
+        Point addedPoint = points.get(points.size()-1);
+//                addPath(insertPathToDb(mDbHelper, selectedPosition.getId(), addedPoint.getId()),
+//                        selectedPosition, addedPoint);
+        addPointMarker(addedPoint, addedPoint.getId(), true);
+        selectedPosition = addedPoint;
+
         generatePoint();
     }
 
-//    public void finishEditor(View view) {
-//        mDatabase.child(getString(R.string.node_path)).setValue(null);
-//        for (int i=0;i<locations.size();i++){
-//            if(i+1 < locations.size()){
-//                devfikr.skripsi.ubnav.model.Point startLocation =
-//                        LatLngConverter.convertToLocalLatLng(locations.get(i));
-//                devfikr.skripsi.ubnav.model.Point endLocation =
-//                        LatLngConverter.convertToLocalLatLng(locations.get(i+1));
-//                Path path = new Path(startLocation, endLocation);
-//                mDatabase.child(getString(R.string.node_path)).push().setValue(path);
-//            }
+    @Override
+    public void deleteCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
+        updateValue(points, paths, selectedPoint);
+//        for (Point point : points){
+//            if(point.getId() == selec)
 //        }
-//        createPath(view);
-//    }
+        selectedMarker = null;
+        selectedPoint = null;
+        generatePoint();
+    }
 
-//    public void exitWatchPath(View view) {
-//        isWatchMode = false;
-//        fab_exit_watch_path.setVisibility(View.GONE);
-//        fab_watch_path.setVisibility(View.VISIBLE);
+    public void undoPath(View view) {
+        commandManager.undo();
+    }
+
+    public void redoPath(View view) {
+        commandManager.redo();
+    }
+
+    @Override
+    public void updateCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint, Point draggedPoint) {
+        updateValue(points, paths, selectedPoint);
+//        generatePoint();
+        Timber.d(selectedMarker.getId());
+//        long selectedPointId = selectedPoint.getId();
+long selectedPointId = draggedPoint.getId();
+//        switchSelectedMarker(selectedMarker);
+//        int lastLatLngsId = points.size()-1;
 //
-//        clearPath(view);
-//    }
+//        if(selectedPosition.getId()== selectedPointId){
+//            selectedPosition = points.get(lastLatLngsId);
+//        }
+        int i =0;
+        //implementasi kan visualisasi path ke path sebenarnya setelah di geser
+        for (Path path : paths){
+            if(path.getStartLocation().getId()==selectedPointId){
+                for (Point point : points){
+                    if(point.getId()==selectedPointId){
+//                        Point draggedPoint = points.get(lastLatLngsId);
+//                        path.setStartLocation(draggedPoint);
+                        Path visualPath = new Path(
+                                path.getId(), draggedPoint, path.getEndLocation());
+                        paths.set(i, visualPath);
+//                        visualPaths.add(visualPath);
+                    }
+                }
+            } else if(path.getEndLocation().getId()==selectedPointId){
+                for (Point point : points){
+                    if(point.getId()==selectedPointId){
+//                        Point draggedPoint = points.get(lastLatLngsId);
+//                        path.setStartLocation(draggedPoint);
+                        Path visualPath = new Path(
+                                path.getId(), path.getStartLocation(), draggedPoint);
+                        paths.set(i, visualPath);
+//                        visualPaths.add(visualPath);
+                    }
+                }
+            }
+            i++;
+        }
+        generatePoint();
+    }
+
+    @Override
+    public void addPointBetweenPathResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
+        updateValue(points, paths, selectedPoint);
+        switchState(EDIT_NODE);
+        generatePoint();
+    }
 }
