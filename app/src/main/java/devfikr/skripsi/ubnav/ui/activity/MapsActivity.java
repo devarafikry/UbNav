@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.ui;
 
 import android.content.ContentUris;
 import android.database.Cursor;
@@ -32,6 +32,16 @@ import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import devfikr.skripsi.ubnav.R;
+import devfikr.skripsi.ubnav.command.AddCommandCallback;
+import devfikr.skripsi.ubnav.command.AddPointBetweenPathCallback;
+import devfikr.skripsi.ubnav.command.AddPointBetweenPathCommand;
+import devfikr.skripsi.ubnav.command.AddPointCommand;
+import devfikr.skripsi.ubnav.command.CommandManager;
+import devfikr.skripsi.ubnav.command.DeleteCommandCallback;
+import devfikr.skripsi.ubnav.command.DeletePointCommand;
+import devfikr.skripsi.ubnav.command.UpdateCommandCallback;
+import devfikr.skripsi.ubnav.command.UpdatePointCommand;
 import devfikr.skripsi.ubnav.data.DatabaseContract;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.CreateHistory;
@@ -49,7 +59,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         AddCommandCallback,
         DeleteCommandCallback,
         UpdateCommandCallback,
-        AddPointBetweenPathCallback{
+        AddPointBetweenPathCallback {
 
     DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
 
@@ -325,8 +335,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.setTag(latlngid);
     }
 
-
-
     private void addVisualLatLng(long id,LatLng latLng){
         Point addedPoint =
                new Point(id, latLng.latitude, latLng.longitude);
@@ -359,6 +367,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         }
+
 
     private void generatePoint(){
         mMap.clear();
@@ -574,6 +583,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addPointMarker(addedPoint, addedPoint.getId(), true);
         selectedPosition = addedPoint;
 
+//        addPointMarker(addedPoint, addedPoint.getId(),true);
         generatePoint();
     }
 

@@ -1,6 +1,5 @@
 package devfikr.skripsi.ubnav.ui;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -20,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import devfikr.skripsi.ubnav.MapsActivity;
 import devfikr.skripsi.ubnav.R;
 import devfikr.skripsi.ubnav.util.SnackbarUtil;
 
