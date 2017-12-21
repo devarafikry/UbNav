@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -8,6 +8,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
+import devfikr.skripsi.ubnav.commands.callback.AddPointBetweenPathCommandCallback;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
@@ -23,31 +26,33 @@ public class AddPointBetweenPathCommand implements Command {
     private ArrayList<Path> paths;
     private LatLng latLng;
     private Point addedPoint;
-    private AddPointBetweenPathCallback addPointBetweenPathCallback;
+    private AddPointBetweenPathCommandCallback addPointBetweenPathCommandCallback;
     private View root_map;
     private Snackbar s;
     private Path selectedPath;
     private Path createdPath1;
     private Path createdPath2;
     private int pathCategory;
+    private int inOutCategory;
 
-    public AddPointBetweenPathCommand(View view, Snackbar s, AddPointBetweenPathCallback addPointBetweenPathCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,Path selectedPath, LatLng latLng, int pathCategory) {
+    public AddPointBetweenPathCommand(View view, Snackbar s, AddPointBetweenPathCommandCallback addPointBetweenPathCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, Path selectedPath, LatLng latLng, int pathCategory, int inOutCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
         this.selectedPoint = selectedPoint;
-        this.addPointBetweenPathCallback = addPointBetweenPathCallback;
+        this.addPointBetweenPathCommandCallback = addPointBetweenPathCommandCallback;
         this.root_map = view;
         this.s = s;
         this.selectedPath = selectedPath;
         this.latLng = latLng;
         this.pathCategory = pathCategory;
+        this.inOutCategory = inOutCategory;
     }
 
     @Override
     public void execute() {
         addPointBetweenPath(selectedPath, latLng);
-        addPointBetweenPathCallback.addPointBetweenPathResult(points, paths, selectedPoint);
+        addPointBetweenPathCommandCallback.addPointBetweenPathResult(points, paths, selectedPoint);
     }
 
     @Override
@@ -57,7 +62,7 @@ public class AddPointBetweenPathCommand implements Command {
         paths.remove(createdPath1);
         paths.remove(createdPath2);
         long addedPathId = DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
-                selectedPath.getEndLocation().getId(), pathCategory);
+                selectedPath.getEndLocation().getId(), pathCategory, inOutCategory);
         addPath(addedPathId,
                 selectedPath.getStartLocation(), selectedPath.getEndLocation());
         for (Path path : paths){
@@ -65,13 +70,13 @@ public class AddPointBetweenPathCommand implements Command {
                 selectedPath = path;
             }
         }
-        addPointBetweenPathCallback.addPointBetweenPathResult(points, paths, selectedPoint);
+        addPointBetweenPathCommandCallback.addPointBetweenPathResult(points, paths, selectedPoint);
     }
 
     @Override
     public void redo() {
         addPointBetweenPath(selectedPath, latLng);
-        addPointBetweenPathCallback.addPointBetweenPathResult(points, paths, selectedPoint);
+        addPointBetweenPathCommandCallback.addPointBetweenPathResult(points, paths, selectedPoint);
     }
 
     @Override
@@ -89,7 +94,7 @@ public class AddPointBetweenPathCommand implements Command {
         return null;
     }
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory, inOutCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.addedPoint = addedPoint;
     }
@@ -117,12 +122,12 @@ public class AddPointBetweenPathCommand implements Command {
 
 //        //insert path 1
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
-                addedPoint.getId(), pathCategory),
+                addedPoint.getId(), pathCategory, inOutCategory),
                 selectedPath.getStartLocation(), addedPoint);
         createdPath1 = paths.get(paths.size()-1);
 //        //insert path 2
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, addedPoint.getId(),
-                selectedPath.getEndLocation().getId(), pathCategory),
+                selectedPath.getEndLocation().getId(), pathCategory, inOutCategory),
                 addedPoint, selectedPath.getEndLocation());
         createdPath2 = paths.get(paths.size()-1);
         selectedPoint = addedPoint;

@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.command;
 
 import android.support.design.widget.Snackbar;
 import android.view.View;
@@ -7,6 +7,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
+import devfikr.skripsi.ubnav.commands.callback.UpdateCommandCallback;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
@@ -28,8 +31,9 @@ public class UpdatePointCommand implements Command {
     private LatLng latLngStart;
     private Point draggedPoint;
     private int pathCategory;
+    private int inOutCategory;
 
-    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd, int pathCategory) {
+    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd, int pathCategory, int inOutCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -40,6 +44,7 @@ public class UpdatePointCommand implements Command {
         this.latLngEnd = latLngEnd;
         this.latLngStart = latLngStart;
         this.pathCategory = pathCategory;
+        this.inOutCategory = inOutCategory;
     }
 
     @Override
@@ -78,7 +83,7 @@ public class UpdatePointCommand implements Command {
     private void updatePoint(long selectedPointId, LatLng position) {
         Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
         draggedPoint = updatedPoint;
-        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position, pathCategory);
+        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position, pathCategory, inOutCategory);
         for (int i =0;i<points.size();i++){
             if (points.get(i).getId() == selectedPointId){
                 points.set(i, updatedPoint);

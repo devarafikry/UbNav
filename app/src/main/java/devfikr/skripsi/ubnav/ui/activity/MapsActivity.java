@@ -1,7 +1,9 @@
-package devfikr.skripsi.ubnav.ui;
+package devfikr.skripsi.ubnav.ui.activity;
 
 import android.content.ContentUris;
 import android.database.Cursor;
+import android.net.Uri;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -11,7 +13,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,15 +35,19 @@ import java.util.ArrayList;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import devfikr.skripsi.ubnav.R;
-import devfikr.skripsi.ubnav.command.AddCommandCallback;
-import devfikr.skripsi.ubnav.command.AddPointBetweenPathCallback;
-import devfikr.skripsi.ubnav.command.AddPointBetweenPathCommand;
-import devfikr.skripsi.ubnav.command.AddPointCommand;
-import devfikr.skripsi.ubnav.command.CommandManager;
-import devfikr.skripsi.ubnav.command.DeleteCommandCallback;
-import devfikr.skripsi.ubnav.command.DeletePointCommand;
-import devfikr.skripsi.ubnav.command.UpdateCommandCallback;
-import devfikr.skripsi.ubnav.command.UpdatePointCommand;
+import devfikr.skripsi.ubnav.commands.callback.AddOnePointCommandCallback;
+import devfikr.skripsi.ubnav.commands.callback.AddPointCommandCallback;
+import devfikr.skripsi.ubnav.commands.command.AddOnePointCommand;
+import devfikr.skripsi.ubnav.commands.command.AddPathCommand;
+import devfikr.skripsi.ubnav.commands.callback.AddPathCommandCallback;
+import devfikr.skripsi.ubnav.commands.callback.AddPointBetweenPathCommandCallback;
+import devfikr.skripsi.ubnav.commands.command.AddPointBetweenPathCommand;
+import devfikr.skripsi.ubnav.commands.command.AddPointCommand;
+import devfikr.skripsi.ubnav.commands.CommandManager;
+import devfikr.skripsi.ubnav.commands.callback.DeleteCommandCallback;
+import devfikr.skripsi.ubnav.commands.command.DeletePointCommand;
+import devfikr.skripsi.ubnav.commands.callback.UpdateCommandCallback;
+import devfikr.skripsi.ubnav.commands.command.UpdatePointCommand;
 import devfikr.skripsi.ubnav.data.DatabaseContract;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.CreateHistory;
@@ -56,11 +62,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.OnPolylineClickListener,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
-        AddCommandCallback,
+        AddPointCommandCallback,
         DeleteCommandCallback,
         UpdateCommandCallback,
-        AddPointBetweenPathCallback {
+        AddPathCommandCallback,
+        AddOnePointCommandCallback,
+        AddPointBetweenPathCommandCallback {
 
+    public static final String KEY_PATH_IN_OUT = "keyPathInOut";
     DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
 
     private GoogleMap mMap;
@@ -89,6 +98,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int EDIT_NODE = 90;
 
     private int editedPolylineId;
+    private boolean isJoinNode = false;
+    private boolean isAddMarker = false;
     //selected position (the green point)
     private Point selectedPosition;
     //selected marker (the marker of selected position)
@@ -100,22 +111,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LoaderManager.LoaderCallbacks<Cursor> pathsLoaderCallback;
     private int LOADER_POINT_ID = 22;
     private int LOADER_PATH_ID = 33;
+    public final static String KEY_PATH_TYPE = "pathTypeKey";
+    private int PATH_CATEGORY;
+    private int PATH_IN_OUT_CATEGORY;
 
     private CommandManager commandManager;
+    @BindView(R.id.fab_add_marker) FloatingActionButton fab_add_marker;
     @BindView(R.id.btn_finish)
     Button btn_finish;
     @BindView(R.id.root_map)
-    FrameLayout root_map;
+    CoordinatorLayout root_map;
     Toast mToast;
     @BindView(R.id.fab_undo)
     FloatingActionButton fab_undo;
     @BindView(R.id.fab_redo)
     FloatingActionButton fab_redo;
     @BindView(R.id.fab_clear)
-    FloatingActionButton fab_clear;
-    @BindView(R.id.fab_edit_status)
-    FloatingActionButton fab_edit_status;
 
+    FloatingActionButton fab_edit_status;
+    @BindView(R.id.fab_join_node)
+    FloatingActionButton fab_join_node;
+    @BindView(R.id.bottom_sheet)
+    LinearLayout layoutBottomSheet;
 //    @BindView(R.id.fab_save)
 //    FloatingActionButton fab_save;
     private DatabaseHelper mDbHelper;
@@ -158,6 +175,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Timber.plant(new Timber.DebugTree());
         setContentView(R.layout.activity_maps);
         ButterKnife.bind(this);
+        layoutBottomSheet.setVisibility(View.GONE);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -165,6 +183,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDbHelper = new DatabaseHelper(this);
         mDbHelper.getWritableDatabase();
 
+        if(getIntent()!=null){
+            PATH_CATEGORY = getIntent().getIntExtra(KEY_PATH_TYPE, DatabaseContract.PathColumns.CATEGORY_WALKING);
+            PATH_IN_OUT_CATEGORY = getIntent().getIntExtra(KEY_PATH_IN_OUT, DatabaseContract.PathColumns.CATEGORY_ALLBOUND);
+        }
         initPointsLoaderCallback();
         initPathsLoaderCallback();
 
@@ -175,9 +197,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         pointsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+                Uri getPointUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_POINTS,
+                        PATH_CATEGORY);
+
                 return new CursorLoader(
                         MapsActivity.this,
-                        DatabaseContract.CONTENT_URI_POINTS,
+                        ContentUris.withAppendedId(getPointUri,
+                                PATH_IN_OUT_CATEGORY),
                         null,
                         null,
                         null,
@@ -221,10 +247,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         pathsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+                Uri getPathUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_PATHS,
+                        PATH_CATEGORY);
+
                 return new CursorLoader(
                         MapsActivity.this,
-                        ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_PATHS,
-                                DatabaseContract.PathColumns.CATEGORY_WALKING),
+                        ContentUris.withAppendedId(getPathUri,
+                                PATH_IN_OUT_CATEGORY),
                         null,
                         null,
                         null,
@@ -344,12 +373,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapClick(LatLng latLng) {
 //        String pathId = generatePathId();
-        if(isEditNode){
+        if(isJoinNode){
+            return;
+        }
+        if(isAddMarker){
+            commandManager.doCommand(new AddOnePointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+            isAddMarker = false;
+            fab_add_marker.setSelected(false);
+        }
+        else if(isEditNode && !isJoinNode){
             if(selectedPosition == null){
                 SnackbarUtil.showSnackBar(root_map, snackbar,"Pilih point terlebih dahulu.", Snackbar.LENGTH_LONG);
             } else{
-//                addPoint(latLng);
-                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng));
+                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
 
             }
         } else if(isEditPolyline){
@@ -360,10 +396,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     selectedPath = path;
                 }
             }
-//            addPointBetweenPath(selectedPath);
-            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng));
-//            switchState(EDIT_NODE);
-//            generatePoint();
+            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
         }
 
         }
@@ -375,7 +408,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         polylines.clear();
         if(paths.size() == 0){
             selectedPosition = points.get(0);
+            Timber.d("Cupu "+ points.get(0).getId());
             addPointMarker(selectedPosition, selectedPosition.getId(), true);
+        }
+        for(int i =0;i<points.size();i++){
+            boolean havePath = false;
+            Point point = points.get(i);
+            for (int j=0;j<paths.size();j++){
+                Path path = paths.get(j);
+                if(path.getStartLocation().getId() == point.getId() ||
+                        path.getEndLocation().getId() == point.getId()){
+                    havePath = true;
+                }
+            }
+            if(!havePath){
+                addPointMarker(point, point.getId(), false);
+            }
         }
         for(int i =0;i<paths.size();i++){
             Path path = paths.get(i);
@@ -533,14 +581,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        updatePoint(selectedPointId, marker.getPosition());
 
         commandManager.doCommand(new UpdatePointCommand(root_map, snackbar, this, mDbHelper, paths, points, selectedPosition,
-                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition()));
+                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition(), PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
 
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        switchState(EDIT_NODE);
-        switchSelectedMarker(marker);
+        if(isJoinNode){
+            long toJoinId = Long.valueOf(marker.getTag().toString());
+            Point toJoinPoint = null;
+            for (Point point:points){
+                if(point.getId() == toJoinId){
+                    toJoinPoint = point;
+                }
+            }
+            commandManager.doCommand(new AddPathCommand(
+                    root_map,
+                    snackbar,
+                    this,
+                    mDbHelper,
+                    paths,
+                    selectedPosition,
+                    toJoinPoint,
+                    PATH_CATEGORY,
+                    PATH_IN_OUT_CATEGORY
+            ));
+            isJoinNode = false;
+            marker.setTag(toJoinId);
+            fab_join_node.setSelected(false);
+        }
+        else{
+            switchState(EDIT_NODE);
+            switchSelectedMarker(marker);
+        }
+
 //        generatePoint();
         return true;
     }
@@ -548,29 +622,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void switchSelectedMarker(Marker marker) {
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
 
-        if(selectedMarker != null){
+        String markerTag = marker.getTag().toString();
+        if(selectedMarker != null && marker!=null){
 //            Timber.d("d"+ selectedMarker.getTag().toString());
-            if(!(selectedMarker.getTag().toString().equals(marker.getTag().toString()))){
+            if(!(selectedMarker.getTag().toString().equals(markerTag))){
                 selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
             }
         }
         selectedMarker = marker;
         for (Point point : points){
-            if(point.getId()==Long.valueOf(marker.getTag().toString())){
+            if(point.getId()==Long.valueOf(markerTag)){
                 selectedPosition = point;
             }
         }
+        selectedMarker.setTag(markerTag);
     }
 
 
     public void deletePoint(View view) {
 //        deletePoint();
-        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition ));
+        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
     }
 
     private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){
         this.selectedPosition = selectedPoint;
         this.points = points;
+        this. paths = paths;
+    }
+    private void updateValue(ArrayList<Path> paths){
         this. paths = paths;
     }
 
@@ -654,6 +733,51 @@ long selectedPointId = draggedPoint.getId();
     public void addPointBetweenPathResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
         updateValue(points, paths, selectedPoint);
         switchState(EDIT_NODE);
+        generatePoint();
+    }
+
+    public void joinNode(View view) {
+        if(isJoinNode){
+            isJoinNode = false;
+            view.setSelected(false);
+        } else{
+            this.isAddMarker = false;
+            fab_add_marker.setSelected(false);
+            this.isJoinNode = true;
+            view.setSelected(true);
+        }
+    }
+
+    @Override
+    public void addPathCommandResult(ArrayList<Path> paths, long pointToId) {
+        updateValue(paths);
+        generatePoint();
+        for(Marker marker:markers){
+            if (Long.valueOf(marker.getTag().toString()) == pointToId){
+                switchSelectedMarker(marker);
+            }
+        }
+    }
+
+    public void addPointBetweenPath(View view) {
+
+    }
+
+    public void addMarker(View view) {
+        if(isAddMarker){
+            isAddMarker = false;
+            view.setSelected(false);
+        } else{
+            this.isAddMarker = true;
+            fab_join_node.setSelected(false);
+            this.isJoinNode = false;
+            view.setSelected(true);
+        }
+    }
+
+    @Override
+    public void addOnePointCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
+        updateValue(points, paths, selectedPoint);
         generatePoint();
     }
 }

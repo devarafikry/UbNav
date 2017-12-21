@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
+    android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,4 +8,27 @@
     android:layout_height="match_parent"
     tools:context="devfikr.skripsi.ubnav.ui.activity.EditActivity">
 
-</android.support.constraint.ConstraintLayout>
+    <Button
+        android:id="@+id/btn_edit_walk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PEJALAN KAKI"/>
+
+    <Button
+        android:id="@+id/btn_edit_motor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="KENDARAAN BERMOTOR"/>
+
+    <Button
+        android:id="@+id/btn_add_interchange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TAMBAH INTERCHANGE"/>
+
+    <!--<Button-->
+        <!--android:id="@+id/btn_edit_car"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="MOBIL"/>-->
+</LinearLayout>

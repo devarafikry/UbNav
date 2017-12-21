@@ -10,4 +10,6 @@
 
     <string name="node_path">path</string>
     <string name="node_location">location</string>
+
+    <string name="pref_debug_key">debugKey</string>
 </resources>

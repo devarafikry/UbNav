@@ -33,18 +33,38 @@
             android:value="@string/google_maps_key"/>
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".ui.activity.MapsActivity"
             android:label="@string/title_activity_maps">
-
         </activity>
-        <activity android:name=".ui.LoginActivity"
+        <activity
+            android:name=".ui.activity.LoginActivity"
             android:theme="@style/AppTheme.NoActionBar"
-                  android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+        <activity android:name=".ui.activity.MainActivity">
+        </activity>
+        <activity android:name=".ui.activity.AddInterchangeActivity">
+        </activity>
+        <activity android:name=".ui.activity.NavigationActivity">
+        </activity>
+        <activity
+            android:name=".ui.activity.SettingActivity"
+            android:theme="@style/AppTheme">
+        </activity>
+        <activity android:name=".ui.activity.EditActivity">
+        </activity>
+        <activity android:name=".ui.activity.NavigationTypeChooserActivity">
+        </activity>
+        <activity android:name=".ui.activity.InOutChooserActivity">
+        </activity>
+        <activity android:name=".ui.activity.NavigationMotorActivity">
+        </activity>
+        <activity android:name=".ui.activity.NavigationInterchangeActivity">
         </activity>
     </application>
 

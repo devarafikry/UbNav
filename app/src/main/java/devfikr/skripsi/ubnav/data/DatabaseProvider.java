@@ -15,9 +15,9 @@ import android.support.annotation.Nullable;
 
 public class DatabaseProvider extends ContentProvider{
     private static final int POINTS = 100;
-    private static final int POINTS_WITH_ID = 101;
+    private static final int POINTS_WITH_CATEGORY_AND_INOUT_ID = 101;
 
-    private static final int PATHS_WITH_CATEGORY_ID = 200;
+    private static final int PATHS_WITH_CATEGORY_AND_INOUT_ID = 200;
     private static final int PATHS_WITH_ID = 201;
 
     private static final int GATES = 300;
@@ -33,16 +33,16 @@ public class DatabaseProvider extends ContentProvider{
         sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
                 DatabaseContract.TABLE_POINTS,
                 POINTS);
-//        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
-//                DatabaseContract.TABLE_POINTS + "/#",
-//                POINTS_WITH_ID);
+        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
+                DatabaseContract.TABLE_POINTS + "/#"+"/#",
+                POINTS_WITH_CATEGORY_AND_INOUT_ID);
 
 //        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
 //                DatabaseContract.TABLE_PATHS,
 //                PATHS);
         sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
-                DatabaseContract.TABLE_PATHS + "/#",
-                PATHS_WITH_CATEGORY_ID);
+                DatabaseContract.TABLE_PATHS + "/#"+"/#",
+                PATHS_WITH_CATEGORY_AND_INOUT_ID);
 
 //        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
 //                DatabaseContract.TABLE_GATE,
@@ -51,9 +51,9 @@ public class DatabaseProvider extends ContentProvider{
 //                DatabaseContract.TABLE_GATE+ "/#",
 //                GATES_WITH_ID);
 //
-//        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
-//                DatabaseContract.TABLE_INTERCHANGE,
-//                INTERCHANGES);
+        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
+                DatabaseContract.TABLE_INTERCHANGE,
+                INTERCHANGES);
 //        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
 //                DatabaseContract.TABLE_INTERCHANGE+ "/#",
 //                INTERCHANGES_WITH_ID);
@@ -74,7 +74,7 @@ public class DatabaseProvider extends ContentProvider{
         Cursor retCursor;
 
         switch (match){
-            case PATHS_WITH_CATEGORY_ID :
+            case PATHS_WITH_CATEGORY_AND_INOUT_ID :
 //                SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
 //                builder.setTables(
 //                        DatabaseContract.TABLE_PATHS+" JOIN "+DatabaseContract.TABLE_POINTS+
@@ -83,8 +83,13 @@ public class DatabaseProvider extends ContentProvider{
 //
 //                );
                 String path_category_id = uri.getPathSegments().get(1);
-                String mSelection = DatabaseContract.PathColumns.COLUMN_CATEGORY+"=?";
-                String mSelectionArgs[] = {path_category_id};
+                String path_category_in_out_id = uri.getPathSegments().get(2);
+
+                String mSelection = DatabaseContract.PathColumns.COLUMN_CATEGORY+"=?"
+                        +" AND "+
+                        DatabaseContract.PathColumns.COLUMN_IN_OUT_CATEGORY+"=?";
+                String mSelectionArgs[] = {path_category_id, path_category_in_out_id};
+
                 //COMPLEX QUERYYYYYYYY
 //                Cursor cursor = db.rawQuery(
 //                        "SELECT pa._id " +
@@ -112,6 +117,17 @@ public class DatabaseProvider extends ContentProvider{
                 );
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
+            case INTERCHANGES:
+                Cursor cursorInterchanges = db.query(
+                        DatabaseContract.TABLE_INTERCHANGE,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                return cursorInterchanges;
             case POINTS:
                 Cursor cursor1 = db.query(
                         DatabaseContract.TABLE_POINTS,
@@ -123,6 +139,26 @@ public class DatabaseProvider extends ContentProvider{
                         null
                 );
                 return cursor1;
+            case POINTS_WITH_CATEGORY_AND_INOUT_ID:
+                String point_category_id = uri.getPathSegments().get(1);
+                String point_category_in_out_id = uri.getPathSegments().get(2);
+
+                String mSelectionP = DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY+"=?"
+                        +" AND "+
+                        DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY+"=?";
+                String mSelectionArgsP[] = {point_category_id, point_category_in_out_id};
+
+                Cursor cursorP = db.query(
+                        DatabaseContract.TABLE_POINTS,
+                        null,
+                        mSelectionP,
+                        mSelectionArgsP,
+                        null,
+                        null,
+                        null
+                );
+                cursorP.setNotificationUri(getContext().getContentResolver(), uri);
+                return cursorP;
             default:
                 throw new UnsupportedOperationException("Unknown Uri");
         }

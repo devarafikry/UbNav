@@ -1,6 +1,7 @@
-package ub.mobile.ap.ubnav.base;
+package devfikr.skripsi.ubnav.djikstra.base;
 
-import com.mapbox.mapboxsdk.geometry.LatLng;
+
+import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by Aryo on 3/12/2017.

@@ -1,19 +1,19 @@
-<FrameLayout
-    android:id="@+id/root_map"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent">
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                 xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                 xmlns:tools="http://schemas.android.com/tools"
+                                                 android:id="@+id/root_map"
+                                                 android:layout_width="match_parent"
+                                                 android:layout_height="match_parent"
+                                                 android:background="#efefef"
+                                                 >
     <fragment
               android:id="@+id/map"
               android:name="com.google.android.gms.maps.SupportMapFragment"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              tools:context="devfikr.skripsi.ubnav.MapsActivity"/>
+              tools:context="devfikr.skripsi.ubnav.ui.activity.MapsActivity"/>
     <LinearLayout
+        android:id="@+id/edit_panel"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -46,13 +46,24 @@
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
+
         <android.support.design.widget.FloatingActionButton
             android:layout_gravity="right"
-            android:src="@drawable/ic_insert_node"
+            android:src="@drawable/ic_unite"
             android:visibility="visible"
-            app:backgroundTint="@color/colorPrimary"
-            android:id="@+id/fab_edit_status"
-            android:onClick="addPointBetweenPath"
+            app:backgroundTint="@drawable/fab_focused"
+            android:id="@+id/fab_join_node"
+            android:onClick="joinNode"
+            android:layout_margin="10dp"
+            android:layout_width="@dimen/floating_button_size"
+            android:layout_height="@dimen/floating_button_size"/>
+        <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
+            android:src="@drawable/ic_marker"
+            android:visibility="visible"
+            app:backgroundTint="@drawable/fab_focused"
+            android:id="@+id/fab_add_marker"
+            android:onClick="addMarker"
             android:layout_margin="10dp"
             android:layout_width="@dimen/floating_button_size"
             android:layout_height="@dimen/floating_button_size"/>
@@ -89,5 +100,6 @@
         android:onClick="finishEditor"
         android:text="Finish"
         android:layout_gravity="right"/>
-
-</FrameLayout>
+    <include
+        layout="@layout/bottom_sheet" />
+</android.support.design.widget.CoordinatorLayout>

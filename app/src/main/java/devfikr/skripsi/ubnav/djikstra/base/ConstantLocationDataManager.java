@@ -1,4 +1,4 @@
-package ub.mobile.ap.ubnav.base;
+package devfikr.skripsi.ubnav.djikstra.base;
 
 import java.util.ArrayList;
 

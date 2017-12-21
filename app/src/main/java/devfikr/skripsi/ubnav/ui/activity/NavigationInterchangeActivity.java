@@ -41,12 +41,13 @@ import devfikr.skripsi.ubnav.djikstra.base.ConstantLocationDataManager;
 import devfikr.skripsi.ubnav.djikstra.base.Graph;
 import devfikr.skripsi.ubnav.djikstra.base.Helper;
 import devfikr.skripsi.ubnav.djikstra.base.PointOfInterest;
+import devfikr.skripsi.ubnav.model.Interchange;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
 import devfikr.skripsi.ubnav.util.LatLngConverter;
 import timber.log.Timber;
 
-public class NavigationMotorActivity
+public class NavigationInterchangeActivity
  extends FragmentActivity implements OnMapReadyCallback,
          GoogleMap.OnMarkerClickListener,
          GoogleMap.OnMapClickListener{
@@ -68,16 +69,27 @@ public class NavigationMotorActivity
     private ArrayList<Path> outBoundPaths = new ArrayList<>();
     //points arraylist for storing points from db
     private ArrayList<Point> outBoundPoints = new ArrayList<>();
+    //path arraylist for storing paths from db
+    private ArrayList<Path> walkingPaths = new ArrayList<>();
+    //points arraylist for storing points from db
+    private ArrayList<Point> walkingPoints = new ArrayList<>();
+    private ArrayList<Interchange> interchanges = new ArrayList<>();
 
     private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Point> djikstraInBoundPoints = new ArrayList<>();
     private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Path> djikstraInBoundPaths = new ArrayList<>();
     private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Point> djikstraOutBoundPoints = new ArrayList<>();
     private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Path> djikstraOutBoundPaths = new ArrayList<>();
+    private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Point> djikstraWalkingPoint = new ArrayList<>();
+    private ArrayList<devfikr.skripsi.ubnav.djikstra.base.Path> djikstraWalkingPath = new ArrayList<>();
 
     private LoaderManager.LoaderCallbacks<Cursor> inBoundPathsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> inBoundPointsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> outBoundPathsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> outBoundPointsLoaderCallback;
+    private LoaderManager.LoaderCallbacks<Cursor> walkingPointsLoaderCallback;
+    private LoaderManager.LoaderCallbacks<Cursor> walkingPathsLoaderCallback;
+    private LoaderManager.LoaderCallbacks<Cursor> interchangePointsLoaderCallback;
+
     private LatLng selectedLatLng;
     private LatLng startLatLng;
     private Marker startMarker;
@@ -85,6 +97,9 @@ public class NavigationMotorActivity
     private int LOADER_INBOUND_PATH_ID = 33;
     private int LOADER_OUTBOUND_POINT_ID = 44;
     private int LOADER_OUTBOUND_PATH_ID = 55;
+    private int LOADER_WALKING_POINT_ID = 66;
+    private int LOADER_WALKING_PATH_ID = 77;
+    private int LOADER_INTERCHANGE_ID = 88;
     private boolean isDebugMode = false;
     public static final String KEY_NAV_TYPE = "keyNavType";
     public static final String KEY_PATH_IN_OUT = "keyPathInOut";
@@ -114,6 +129,9 @@ public class NavigationMotorActivity
         initInBoundPathsLoaderCallback();
         initOutBoundPointsLoaderCallback();
         initOutBoundPathsLoaderCallback();
+        initWalkingPointsLoaderCallback();
+        initWalkingPathsLoaderCallback();
+        initInterchangesLoadersCallback();
         sheetBehavior = BottomSheetBehavior.from(layoutBottomSheet);
         btn_direction.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,10 +150,10 @@ public class NavigationMotorActivity
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
                 Uri getPointUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_POINTS,
-                        navCategory);
+                        DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
 
                 return new CursorLoader(
-                        NavigationMotorActivity.this,
+                        NavigationInterchangeActivity.this,
                         ContentUris.withAppendedId(getPointUri,
                                 DatabaseContract.PathColumns.CATEGORY_INBOUND),
                         null,
@@ -164,7 +182,7 @@ public class NavigationMotorActivity
                         );
                         points.add(point);
                     }
-                    NavigationMotorActivity.this.inBoundPoints = points;
+                    NavigationInterchangeActivity.this.inBoundPoints = points;
                     getSupportLoaderManager().restartLoader(LOADER_INBOUND_PATH_ID, null, inBoundPathsLoaderCallback);
                 }
             }
@@ -180,10 +198,10 @@ public class NavigationMotorActivity
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
                 Uri getPathUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_PATHS,
-                        navCategory);
+                        DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
 
                 return new CursorLoader(
-                        NavigationMotorActivity.this,
+                        NavigationInterchangeActivity.this,
                         ContentUris.withAppendedId(getPathUri,
                                 DatabaseContract.PathColumns.CATEGORY_INBOUND),
                         null,
@@ -233,7 +251,7 @@ public class NavigationMotorActivity
                     LatLng gerbangVeteranMasuk = new LatLng(-7.956213, 112.613298);
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(gerbangVeteranMasuk,15));
 //                    convertDjikstraResources();
-                    mMap.setOnMarkerClickListener(NavigationMotorActivity.this);
+                    mMap.setOnMarkerClickListener(NavigationInterchangeActivity.this);
 //                    selectedPosition = points.get(points.size()-1);
                 } else{
 
@@ -246,16 +264,15 @@ public class NavigationMotorActivity
             }
         };
     }
-
     private void initOutBoundPointsLoaderCallback(){
         outBoundPointsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
                 Uri getPointUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_POINTS,
-                        navCategory);
+                        DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
 
                 return new CursorLoader(
-                        NavigationMotorActivity.this,
+                        NavigationInterchangeActivity.this,
                         ContentUris.withAppendedId(getPointUri,
                                 DatabaseContract.PathColumns.CATEGORY_OUTBOUND),
                         null,
@@ -284,7 +301,7 @@ public class NavigationMotorActivity
                         );
                         points.add(point);
                     }
-                    NavigationMotorActivity.this.outBoundPoints = points;
+                    NavigationInterchangeActivity.this.outBoundPoints = points;
                     getSupportLoaderManager().restartLoader(LOADER_OUTBOUND_PATH_ID, null, outBoundPathsLoaderCallback);
                 }
             }
@@ -300,10 +317,10 @@ public class NavigationMotorActivity
             @Override
             public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
                 Uri getPathUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_PATHS,
-                        navCategory);
+                        DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
 
                 return new CursorLoader(
-                        NavigationMotorActivity.this,
+                        NavigationInterchangeActivity.this,
                         ContentUris.withAppendedId(getPathUri,
                                 DatabaseContract.PathColumns.CATEGORY_OUTBOUND),
                         null,
@@ -346,15 +363,197 @@ public class NavigationMotorActivity
                         cursorPaths.add(path);
                     }
                     outBoundPaths = cursorPaths;
-//                    getSupportLoaderManager().restartLoader(LOADER_OUTBOUND_POINT_ID, null, outBoundPointsLoaderCallback);
+                    getSupportLoaderManager().restartLoader(LOADER_WALKING_POINT_ID, null, walkingPointsLoaderCallback);
                     LatLng gerbangVeteranMasuk = new LatLng(-7.956213, 112.613298);
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(gerbangVeteranMasuk,15));
                     convertDjikstraResources();
-                    mMap.setOnMarkerClickListener(NavigationMotorActivity.this);
-                    generatePolylineForAllNodes(inBoundPaths, outBoundPaths);
+                    mMap.setOnMarkerClickListener(NavigationInterchangeActivity.this);
 //                    selectedPosition = points.get(points.size()-1);
                 } else{
 
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+
+            }
+        };
+    }
+    private void initWalkingPointsLoaderCallback(){
+        walkingPointsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+                Uri getPointUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_POINTS,
+                        DatabaseContract.PathColumns.CATEGORY_WALKING);
+
+                return new CursorLoader(
+                        NavigationInterchangeActivity.this,
+                        ContentUris.withAppendedId(getPointUri,
+                                DatabaseContract.PathColumns.CATEGORY_ALLBOUND),
+                        null,
+                        null,
+                        null,
+                        null
+                );
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+                ArrayList<Point> points
+                        = new ArrayList<>();
+                if(cursor != null){
+
+                    for (int i=0;i<cursor.getCount();i++){
+                        cursor.moveToPosition(i);
+                        double latitude = DatabaseContract.getColumnDouble(
+                                cursor, DatabaseContract.PointColumns.COLUMN_LAT);
+                        double longitude = DatabaseContract.getColumnDouble(
+                                cursor, DatabaseContract.PointColumns.COLUMN_LNG);
+                        long id = DatabaseContract.getColumnLong(
+                                cursor, DatabaseContract.PointColumns._ID);
+                        Point point = new Point(
+                                id, latitude, longitude
+                        );
+                        points.add(point);
+                    }
+                    NavigationInterchangeActivity.this.walkingPoints = points;
+                    getSupportLoaderManager().restartLoader(LOADER_WALKING_PATH_ID, null, walkingPathsLoaderCallback);
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+
+            }
+        };
+    }
+    private void initWalkingPathsLoaderCallback(){
+        walkingPathsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+                Uri getPathUri = ContentUris.withAppendedId(DatabaseContract.CONTENT_URI_PATHS,
+                        DatabaseContract.PathColumns.CATEGORY_WALKING);
+
+                return new CursorLoader(
+                        NavigationInterchangeActivity.this,
+                        ContentUris.withAppendedId(getPathUri,
+                                DatabaseContract.PathColumns.CATEGORY_ALLBOUND),
+                        null,
+                        null,
+                        null,
+                        null
+                );
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+                ArrayList<Path> cursorPaths = new ArrayList<>();
+                if(cursor != null){
+
+                    for (int i=0;i<cursor.getCount();i++){
+                        cursor.moveToPosition(i);
+                        long path_id = DatabaseContract.getColumnLong(
+                                cursor, DatabaseContract.PathColumns._ID
+                        );
+                        int startPointId = DatabaseContract.getColumnInt(
+                                cursor, DatabaseContract.PathColumns.COLUMN_START_POINT
+                        );
+                        int endPointId = DatabaseContract.getColumnInt(
+                                cursor, DatabaseContract.PathColumns.COLUMN_END_POINT
+                        );
+                        Point startPoint = null;
+                        Point endPoint = null;
+                        for (Point point : walkingPoints){
+                            if (point.getId() == startPointId){
+                                startPoint = point;
+                            }
+                            if (point.getId() == endPointId){
+                                endPoint = point;
+                            }
+                        }
+//                        if(startPoint == null){
+//                            startPoint
+//                        }
+                        Path path = new Path(path_id, startPoint, endPoint);
+                        cursorPaths.add(path);
+                    }
+                    walkingPaths = cursorPaths;
+                    getSupportLoaderManager().restartLoader(LOADER_INTERCHANGE_ID, null, interchangePointsLoaderCallback);
+
+//                    generatePolylineForAllNodes(inBoundPaths);
+
+                    LatLng gerbangVeteranMasuk = new LatLng(-7.956213, 112.613298);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(gerbangVeteranMasuk,15));
+//                    convertDjikstraResources();
+                    mMap.setOnMarkerClickListener(NavigationInterchangeActivity.this);
+//                    selectedPosition = points.get(points.size()-1);
+                } else{
+
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+
+            }
+        };
+    }
+    private void initInterchangesLoadersCallback(){
+        interchangePointsLoaderCallback = new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+                Uri getPointUri = DatabaseContract.CONTENT_URI_INTERCHANGES;
+
+                return new CursorLoader(
+                        NavigationInterchangeActivity.this,
+                        getPointUri,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+                ArrayList<Interchange> interchangeData
+                        = new ArrayList<>();
+                if(cursor != null){
+                    for (int i=0;i<cursor.getCount();i++){
+                        cursor.moveToPosition(i);
+                        double latitude = DatabaseContract.getColumnDouble(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_LAT);
+                        double longitude = DatabaseContract.getColumnDouble(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_LNG);
+                        long id = DatabaseContract.getColumnLong(
+                                cursor, DatabaseContract.InterchangeColumns._ID);
+                        String name = DatabaseContract.getColumnString(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_NAME
+                        );
+                        String description = DatabaseContract.getColumnString(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_DESCRIPTION
+                        );
+                        int category = DatabaseContract.getColumnInt(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_INTERCHANGE_CATEGORY
+                        );
+                        int available = DatabaseContract.getColumnInt(
+                                cursor, DatabaseContract.InterchangeColumns.COLUMN_AVAILABLE
+                        );
+                        Interchange interchange = new Interchange(
+                                name,
+                                description,
+                                category,
+                                available,
+                                latitude,
+                                longitude,
+                                id
+                        );
+                        interchangeData.add(interchange);
+                    }
+                    NavigationInterchangeActivity.this.interchanges = interchangeData;
+//                    getSupportLoaderManager().restartLoader(LOADER_WALKING_PATH_ID, null, walkingPathsLoaderCallback);
+                    generatePolylineForAllNodes(inBoundPaths, outBoundPaths, walkingPaths, interchanges);
                 }
             }
 
@@ -406,6 +605,14 @@ public class NavigationMotorActivity
 //        }
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromStart =
                 getClosestNode(pointStart, pointsSet);
+        Interchange closesInterchangeFromDest =
+                getClosestInterchange(pointDest, interchanges);
+        devfikr.skripsi.ubnav.djikstra.base.Point interchangePoint =
+                new devfikr.skripsi.ubnav.djikstra.base.Point(
+                        "Interchange",
+                        closesInterchangeFromDest.getLat(),
+                        closesInterchangeFromDest.getLng()
+                );
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromDest =
                 getClosestNode(pointDest, pointsSet);
 //        closestPointFromDest.addDestination(pointDest, Double.MAX_VALUE);
@@ -416,19 +623,14 @@ public class NavigationMotorActivity
 
             Graph djikstraGraph;
 
-            if(navCategory == DatabaseContract.PathColumns.CATEGORY_WALKING){
-                djikstraGraph = dijkstra.calculateShortestPathFrom(
-                        graph,
-                        closestPointFromDest
-                );
-            } else{
+
                 djikstraGraph = dijkstra.calculateShortestVectorPathFrom(
                         graph,
                         closestPointFromDest,
                         djikstraInBoundPaths
                 );
-            }
-            generatePath(djikstraGraph,pointStart, closestPointFromStart, closestPointFromDest, pointDest);
+
+            generatePath(djikstraGraph,closestPointFromStart, pointStart, closestPointFromDest, interchangePoint, pointDest);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -465,6 +667,67 @@ public class NavigationMotorActivity
 //        }
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromStart =
                 getClosestNode(pointStart, pointsSet);
+        Interchange closesInterchangeFromDest =
+                getClosestInterchange(pointDest, interchanges);
+        devfikr.skripsi.ubnav.djikstra.base.Point interchangePoint =
+                new devfikr.skripsi.ubnav.djikstra.base.Point(
+                        "Interchange",
+                        closesInterchangeFromDest.getLat(),
+                        closesInterchangeFromDest.getLng()
+                );
+        devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromDest =
+                getClosestNode(interchangePoint, pointsSet);
+//        closestPointFromDest.addDestination(pointDest, Double.MAX_VALUE);
+        graph.setPoints(pointsSet);
+        try {
+//            Timber.d("Djikstra point size :"+djikstraPoints.size());
+//            Timber.d("Djikstra path size :"+djikstraPaths.size());
+
+            Graph djikstraGraph;
+
+
+                djikstraGraph = dijkstra.calculateShortestVectorPathFrom(
+                        graph,
+                        closestPointFromDest,
+                        djikstraOutBoundPaths
+                );
+
+            generateOutBoundPath(djikstraGraph, closestPointFromStart, pointStart, closestPointFromDest, interchangePoint, pointDest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void generateWalkingPathFromInterchange(LatLng interchange, LatLng dest) {
+        djikstraWalkingPath.clear();
+        djikstraWalkingPoint.clear();
+
+        convertDjikstraResources();
+        Dijkstra dijkstra = new Dijkstra();
+        Graph graph = new Graph();
+        devfikr.skripsi.ubnav.djikstra.base.Point pointStart =
+                new devfikr.skripsi.ubnav.djikstra.base.Point(
+                        "Start",
+                        interchange.latitude,
+                        interchange.longitude
+                );
+        devfikr.skripsi.ubnav.djikstra.base.Point pointDest =
+                new devfikr.skripsi.ubnav.djikstra.base.Point(
+                        "Destination",
+                        dest.latitude,
+                        dest.longitude
+                );
+        Set<devfikr.skripsi.ubnav.djikstra.base.Point> pointsSet;
+
+        pointsSet
+                = Graph.build(djikstraWalkingPoint, djikstraWalkingPath);
+
+//        pointDest.setDistance(Double.MAX_VALUE);
+//        for(devfikr.skripsi.ubnav.djikstra.base.Point point : pointsSet){
+//            point.addDestination(pointDest, Double.MAX_VALUE);
+//        }
+        devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromStart =
+                getClosestNode(pointStart, pointsSet);
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromDest =
                 getClosestNode(pointDest, pointsSet);
 //        closestPointFromDest.addDestination(pointDest, Double.MAX_VALUE);
@@ -475,19 +738,13 @@ public class NavigationMotorActivity
 
             Graph djikstraGraph;
 
-            if(navCategory == DatabaseContract.PathColumns.CATEGORY_WALKING){
-                djikstraGraph = dijkstra.calculateShortestPathFrom(
-                        graph,
-                        closestPointFromDest
-                );
-            } else{
-                djikstraGraph = dijkstra.calculateShortestVectorPathFrom(
-                        graph,
-                        closestPointFromDest,
-                        djikstraOutBoundPaths
-                );
-            }
-            generatePath(djikstraGraph,pointStart, closestPointFromStart, closestPointFromDest, pointDest);
+
+            djikstraGraph = dijkstra.calculateShortestPathFrom(
+                    graph,
+                    closestPointFromDest
+            );
+
+            generateWalkingPath(djikstraGraph, closestPointFromStart, pointStart, closestPointFromDest, pointDest, interchange);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -509,6 +766,22 @@ public class NavigationMotorActivity
         return closestNode;
     }
 
+    private Interchange getClosestInterchange(
+            devfikr.skripsi.ubnav.djikstra.base.Point pointTo,
+            ArrayList<Interchange> interchanges) {
+        Interchange closestInterchange = null;
+        Double lowestDistance = Double.MAX_VALUE;
+        for (Interchange interchange: interchanges) {
+            LatLng latLng = new LatLng(interchange.getLat(), interchange.getLng());
+            double interchangeDistance = Helper.calculateDistance(pointTo, latLng);
+            if(interchangeDistance < lowestDistance){
+                lowestDistance = interchangeDistance;
+                closestInterchange = interchange;
+            }
+        }
+        return closestInterchange;
+    }
+
     private void generatePolylineFromTwoPoint(
             devfikr.skripsi.ubnav.djikstra.base.Point pointA,
             devfikr.skripsi.ubnav.djikstra.base.Point pointB
@@ -522,11 +795,28 @@ public class NavigationMotorActivity
                 BitmapDescriptorFactory.fromResource(R.drawable.ic_round_green), 20));
     }
 
+    private void generatePolylineFromTwoPointWalking(
+            devfikr.skripsi.ubnav.djikstra.base.Point pointA,
+            devfikr.skripsi.ubnav.djikstra.base.Point pointB
+    ){
+        PolylineOptions polylineOptionsStart = new PolylineOptions();
+        polylineOptionsStart.add(pointA.toLatLng());
+        polylineOptionsStart.add(pointB.toLatLng());
+        Polyline polylineStart = mMap.addPolyline(polylineOptionsStart);
+        polylineStart.setColor(getResources().getColor(android.R.color.holo_orange_dark));
+        polylineStart.setStartCap( new CustomCap(
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_round_orange), 20));
+    }
+
     private void generatePolylineForAllNodes(
             ArrayList<Path> inBoundPaths,
-            ArrayList<Path> outBoundPaths
+            ArrayList<Path> outBoundPaths,
+            ArrayList<Path> walkingPaths,
+            ArrayList<Interchange> interchanges
     ){
-       if(isDebugMode){
+        generateInterchanges();
+
+        if(isDebugMode){
            for (Path path:inBoundPaths){
                PolylineOptions polylineOptions = new PolylineOptions();
                polylineOptions.add(
@@ -558,13 +848,43 @@ public class NavigationMotorActivity
                polylineStart.setEndCap( new CustomCap(
                        BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_blue), 10));
            }
+
+           for (Path path:walkingPaths){
+               PolylineOptions polylineOptions = new PolylineOptions();
+               polylineOptions.add(
+                       LatLngConverter.convertToGoogleLatLng(path.getStartLocation())
+               );
+               polylineOptions.add(
+                       LatLngConverter.convertToGoogleLatLng(path.getEndLocation())
+               );
+               Polyline polylineStart = mMap.addPolyline(polylineOptions);
+               polylineStart.setColor(getResources().getColor(android.R.color.holo_purple));
+//               polylineStart.setEndCap( new CustomCap(
+//                       BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_red), 20));
+               polylineStart.setEndCap( new CustomCap(
+                       BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_purple), 10));
+           }
+
+           generateInterchanges();
        }
+    }
+
+    private void generateInterchanges(){
+        for (Interchange interchange : interchanges){
+            LatLng latLng = new LatLng(interchange.getLat(),interchange.getLng());
+            MarkerOptions markerOptions = new MarkerOptions().position(latLng)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_park));
+            Marker marker = mMap.addMarker(markerOptions);
+            marker.setTitle(interchange.getName());
+            marker.setTag(interchange.getId());
+        }
     }
 
     private void generatePath(Graph graph,
                               devfikr.skripsi.ubnav.djikstra.base.Point closestStartPoint,
                               devfikr.skripsi.ubnav.djikstra.base.Point startPoint,
                               devfikr.skripsi.ubnav.djikstra.base.Point closestDestinationPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point interchangePoint,
                               devfikr.skripsi.ubnav.djikstra.base.Point destPoint
                               ){
 
@@ -575,7 +895,7 @@ public class NavigationMotorActivity
         Timber.d("Djikstra Points "+navPoint.size());
         List<devfikr.skripsi.ubnav.djikstra.base.Point> shortestPath = null;
         for (devfikr.skripsi.ubnav.djikstra.base.Point point: navPoint) {
-            if(point.id.equals(startPoint.id)){
+            if(point.id.equals(closestStartPoint.id)){
                 Timber.d("Zilong");
 //                polylineOptions.add(point.toLatLng());
                 generatePolylineFromTwoPoint(startPoint, closestStartPoint);
@@ -595,7 +915,9 @@ public class NavigationMotorActivity
 //                    mMap.addMarker(new MarkerOptions().position(p.toLatLng()).title(p.id));
                 polylineOptions.add(p.toLatLng());
             }
-            generatePolylineFromTwoPoint(closestDestinationPoint, destPoint);
+            polylineOptions.add(closestStartPoint.toLatLng());
+
+            generatePolylineFromTwoPoint(closestDestinationPoint, interchangePoint);
 
             Polyline polyline = mMap.addPolyline(polylineOptions);
             polyline.setStartCap( new CustomCap(
@@ -603,11 +925,111 @@ public class NavigationMotorActivity
             polyline.setColor(getResources().getColor(android.R.color.holo_green_dark));
             LatLng latLng = polylineOptions.getPoints().get(polylineOptions.getPoints().size()-1);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,17));
+            generateWalkingPathFromInterchange(interchangePoint.toLatLng(), destPoint.toLatLng());
         } else{
             generateOutBoundPathFromStartTo(destPoint.toLatLng());
         }
     }
 
+    private void generateWalkingPath(Graph graph,
+                              devfikr.skripsi.ubnav.djikstra.base.Point closestStartPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point startPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point closestDestinationPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point destPoint,
+                                     LatLng interchangeLatLng
+    ){
+
+        boolean isFoundShortestPath = false;
+        Set<devfikr.skripsi.ubnav.djikstra.base.Point> navPoint =
+                graph.getPoints();
+        PolylineOptions polylineOptions = new PolylineOptions();
+        Timber.d("Djikstra Points "+navPoint.size());
+        List<devfikr.skripsi.ubnav.djikstra.base.Point> shortestPath = null;
+        for (devfikr.skripsi.ubnav.djikstra.base.Point point: navPoint) {
+            if(point.id.equals(closestStartPoint.id)){
+                Timber.d("Zilong");
+//                generatePolylineFromTwoPoint(startPoint, closestStartPoint);
+                shortestPath =
+                        point.getShortestPath();
+                if(shortestPath.size() == 0){
+                    isFoundShortestPath = false;
+                } else{
+                    isFoundShortestPath = true;
+                }
+//                polylineOptions.add(point.toLatLng());
+
+            }
+        }
+        if(isFoundShortestPath){
+            for (devfikr.skripsi.ubnav.djikstra.base.Point p: shortestPath) {
+//                    mMap.addMarker(new MarkerOptions().position(p.toLatLng()).title(p.id));
+                polylineOptions.add(p.toLatLng());
+            }
+            polylineOptions.add(interchangeLatLng);
+
+            generatePolylineFromTwoPointWalking(closestDestinationPoint, destPoint);
+
+            Polyline polyline = mMap.addPolyline(polylineOptions);
+            polyline.setStartCap( new CustomCap(
+                    BitmapDescriptorFactory.fromResource(R.drawable.ic_round_orange), 20));
+            polyline.setColor(getResources().getColor(android.R.color.holo_orange_dark));
+            LatLng latLng = polylineOptions.getPoints().get(polylineOptions.getPoints().size()-1);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,17));
+        } else{
+//            generateOutBoundPathFromStartTo(destPoint.toLatLng());
+        }
+    }
+
+    private void generateOutBoundPath(Graph graph,
+                              devfikr.skripsi.ubnav.djikstra.base.Point closestStartPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point startPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point closestDestinationPoint,
+                              devfikr.skripsi.ubnav.djikstra.base.Point interchangePoint,
+                                      devfikr.skripsi.ubnav.djikstra.base.Point destPoint
+    ){
+
+        boolean isFoundShortestPath = false;
+        Set<devfikr.skripsi.ubnav.djikstra.base.Point> navPoint =
+                graph.getPoints();
+        PolylineOptions polylineOptions = new PolylineOptions();
+        Timber.d("Djikstra Points "+navPoint.size());
+        List<devfikr.skripsi.ubnav.djikstra.base.Point> shortestPath = null;
+        for (devfikr.skripsi.ubnav.djikstra.base.Point point: navPoint) {
+            if(point.id.equals(closestStartPoint.id)){
+                Timber.d("Zilong");
+//                polylineOptions.add(point.toLatLng());
+                generatePolylineFromTwoPoint(startPoint, closestStartPoint);
+                shortestPath =
+                        point.getShortestPath();
+                if(shortestPath.size() == 0){
+                    isFoundShortestPath = false;
+                } else{
+                    isFoundShortestPath = true;
+                }
+//                polylineOptions.add(point.toLatLng());
+
+            }
+        }
+        if(isFoundShortestPath){
+            for (devfikr.skripsi.ubnav.djikstra.base.Point p: shortestPath) {
+//                    mMap.addMarker(new MarkerOptions().position(p.toLatLng()).title(p.id));
+                polylineOptions.add(p.toLatLng());
+            }
+            polylineOptions.add(closestStartPoint.toLatLng());
+
+            generatePolylineFromTwoPoint(closestDestinationPoint, interchangePoint);
+
+            Polyline polyline = mMap.addPolyline(polylineOptions);
+            polyline.setStartCap( new CustomCap(
+                    BitmapDescriptorFactory.fromResource(R.drawable.ic_round_green), 20));
+            polyline.setColor(getResources().getColor(android.R.color.holo_green_dark));
+            LatLng latLng = polylineOptions.getPoints().get(polylineOptions.getPoints().size()-1);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,17));
+            generateWalkingPathFromInterchange(interchangePoint.toLatLng(), destPoint.toLatLng());
+        } else{
+//            generateOutBoundPathFromStartTo(destPoint.toLatLng());
+        }
+    }
     private void convertDjikstraResources(){
         for (Point point: inBoundPoints) {
             devfikr.skripsi.ubnav.djikstra.base.Point djikstraPoint =
@@ -651,6 +1073,29 @@ public class NavigationMotorActivity
                     );
             djikstraOutBoundPaths.add(djikstraPath);
         }
+
+        for (Point point: walkingPoints) {
+            devfikr.skripsi.ubnav.djikstra.base.Point djikstraPoint =
+                    new devfikr.skripsi.ubnav.djikstra.base.Point(
+                            String.valueOf(point.getId()),
+                            point.getLatitude(),
+                            point.getLongitude());
+            djikstraWalkingPoint.add(djikstraPoint);
+        }
+
+        for (Path path: walkingPaths) {
+            devfikr.skripsi.ubnav.djikstra.base.Path djikstraPath =
+                    new devfikr.skripsi.ubnav.djikstra.base.Path(
+                            String.valueOf(path.getId()),
+                            String.valueOf(path.getStartLocation().getId()),
+                            path.getStartLocation().getLatitude(),
+                            path.getStartLocation().getLongitude(),
+                            String.valueOf(path.getEndLocation().getId()),
+                            path.getEndLocation().getLatitude(),
+                            path.getEndLocation().getLongitude()
+                    );
+            djikstraWalkingPath.add(djikstraPath);
+        }
     }
 
 
@@ -669,7 +1114,7 @@ public class NavigationMotorActivity
         mMap.clear();
         putPositionMarker(startLatLng);
         generatePOI();
-        generatePolylineForAllNodes(inBoundPaths, outBoundPaths);
+        generatePolylineForAllNodes(inBoundPaths, outBoundPaths, walkingPaths, interchanges);
         generateInBoundPathFromStartTo(latLng);
     }
 
@@ -698,7 +1143,6 @@ public class NavigationMotorActivity
         this.startMarker = marker;
     }
 
-
     @Override
     public void onMapClick(LatLng latLng) {
         if(sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
@@ -706,7 +1150,7 @@ public class NavigationMotorActivity
         } else{
             mMap.clear();
             generatePOI();
-            generatePolylineForAllNodes(inBoundPaths, outBoundPaths);
+            generatePolylineForAllNodes(inBoundPaths, outBoundPaths, walkingPaths, interchanges);
             this.startLatLng = latLng;
             this.startMarker.remove();
             putPositionMarker(latLng);

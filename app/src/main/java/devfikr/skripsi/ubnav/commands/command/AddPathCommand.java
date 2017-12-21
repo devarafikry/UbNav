@@ -1,17 +1,17 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import java.util.ArrayList;
 
+import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
+import devfikr.skripsi.ubnav.commands.callback.AddPathCommandCallback;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
-import devfikr.skripsi.ubnav.util.SnackbarUtil;
 
 /**
  * Created by Fikry-PC on 12/21/2017.
@@ -28,11 +28,12 @@ public class AddPathCommand implements Command {
     private View root_map;
     private Snackbar s;
     private int pathCategory;
+    private int inOutCategory;
 
     @Override
     public void execute() {
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                toJoinPoint.getId(), pathCategory), selectedPoint, toJoinPoint);
+                toJoinPoint.getId(), pathCategory, inOutCategory), selectedPoint, toJoinPoint);
         addPathCommand.addPathCommandResult(paths, toJoinPoint.getId());
     }
 
@@ -45,7 +46,7 @@ public class AddPathCommand implements Command {
     @Override
     public void redo() {
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                toJoinPoint.getId(), pathCategory), selectedPoint, toJoinPoint);
+                toJoinPoint.getId(), pathCategory, inOutCategory), selectedPoint, toJoinPoint);
         addPathCommand.addPathCommandResult(paths, toJoinPoint.getId());
     }
 
@@ -64,7 +65,7 @@ public class AddPathCommand implements Command {
         return selectedPoint;
     }
 
-    public AddPathCommand(View view, Snackbar s, AddPathCommandCallback addPathCommand, DatabaseHelper mDbHelper, ArrayList<Path> paths, Point selectedPoint, Point toJoinPoint, int pathCategory) {
+    public AddPathCommand(View view, Snackbar s, AddPathCommandCallback addPathCommand, DatabaseHelper mDbHelper, ArrayList<Path> paths, Point selectedPoint, Point toJoinPoint, int pathCategory, int inOutCategory) {
         this.mDbHelper = mDbHelper;
         this.paths = paths;
         this.toJoinPoint = toJoinPoint;
@@ -73,6 +74,7 @@ public class AddPathCommand implements Command {
         this.root_map = view;
         this.s = s;
         this.pathCategory = pathCategory;
+        this.inOutCategory = inOutCategory;
     }
 
     public void deletePath(Path pathToDelete) {

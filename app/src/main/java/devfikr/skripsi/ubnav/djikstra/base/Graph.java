@@ -1,4 +1,4 @@
-package ub.mobile.ap.ubnav.base;
+package devfikr.skripsi.ubnav.djikstra.base;
 
 import android.util.Log;
 
@@ -34,6 +34,31 @@ public class Graph {
                     p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
                 else if(p.latitude == path.endPoint.latitude && p.longitude == path.endPoint.longitude)
                     p.addDestination(findPoint(path.startPoint, points), Helper.calculateDistance(p, path.startPoint));
+//                if(p.id.equals(path.startPoint.id))
+//                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
+//                else if(p.id.equals(path.endPoint.id))
+//                    p.addDestination(findPoint(path.startPoint, points), Helper.calculateDistance(p, path.startPoint));
+            }
+            setPoints.add(p);
+        }
+        for(Point p: setPoints) {
+            Log.d("UBNav", p.id + ": " + p.getAdjacentPoints().size());
+        }
+        return setPoints;
+    }
+
+    public static Set<Point> buildWithVector(ArrayList<Point> points, ArrayList<Path> paths) {
+        Set<Point> setPoints = new HashSet<>();
+        for(Point p: points) {
+            for(Path path: paths) {
+                if(p.latitude == path.startPoint.latitude && p.longitude == path.startPoint.longitude)
+                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
+                else if(p.latitude == path.endPoint.latitude && p.longitude == path.endPoint.longitude)
+                    p.addDestination(findPoint(path.startPoint, points), Helper.calculateDistance(p, path.startPoint));
+//                if(p.id.equals(path.startPoint.id))
+//                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
+//                else if(p.id.equals(path.endPoint.id))
+//                    p.addDestination(findPoint(path.startPoint, points), Helper.calculateDistance(p, path.startPoint));
             }
             setPoints.add(p);
         }

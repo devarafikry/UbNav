@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -8,6 +8,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
+import devfikr.skripsi.ubnav.commands.callback.AddPointCommandCallback;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
@@ -24,28 +27,29 @@ public class AddPointCommand implements Command {
     private ArrayList<Path> paths;
     private LatLng latLng;
     private Point addedPoint;
-    private AddCommandCallback addCommandCallback;
+    private AddPointCommandCallback addPointCommandCallback;
     private View root_map;
     private Snackbar s;
     private int pathCategory;
+    private int inOutCategory;
 
     @Override
     public void execute() {
         addPoint(points, latLng);
-        addCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
     public void undo() {
 //        deletePoint(addedPoint.getId());
         deletePoint(addedPoint);
-        addCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
     public void redo() {
         addPoint(points, latLng);
-        addCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
@@ -63,25 +67,26 @@ public class AddPointCommand implements Command {
         return selectedPoint;
     }
 
-    public AddPointCommand(View view, Snackbar s, AddCommandCallback addCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory) {
+    public AddPointCommand(View view, Snackbar s, AddPointCommandCallback addPointCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory, int inOutCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.latLng = latLng;
         this.paths = paths;
         this.selectedPoint = selectedPoint;
-        this.addCommandCallback = addCommandCallback;
+        this.addPointCommandCallback = addPointCommandCallback;
         this.root_map = view;
         this.s = s;
         this.pathCategory = pathCategory;
+        this.inOutCategory = inOutCategory;
     }
 
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory, inOutCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.addedPoint = addedPoint;
 
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                addedPoint.getId(), pathCategory), selectedPoint, addedPoint);
+                addedPoint.getId(), pathCategory, inOutCategory), selectedPoint, addedPoint);
     }
     public void deletePoint(Point pointToDelete) {
         long id = pointToDelete.getId();
@@ -108,7 +113,7 @@ public class AddPointCommand implements Command {
 //        selectedMarker = null;
 //        deletePathFromDb(mDbHelper, idPathToBeDeleted);
         new deletePathTask().execute(new Long[]{idPathToBeDeleted});
-//        new deletePointTask().execute(new Long[]{idPathToBeDeleted});
+        new deletePointTask().execute(new Long[]{idPathToBeDeleted});
 //        deletePointFromDb(mDbHelper, id);
     }
 

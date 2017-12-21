@@ -1,9 +1,8 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.callback;
 
 import java.util.ArrayList;
 
 import devfikr.skripsi.ubnav.model.Path;
-import devfikr.skripsi.ubnav.model.Point;
 
 /**
  * Created by Fikry-PC on 12/21/2017.

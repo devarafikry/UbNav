@@ -1,6 +1,4 @@
-package devfikr.skripsi.ubnav.command;
-
-import com.google.android.gms.maps.model.Marker;
+package devfikr.skripsi.ubnav.commands.callback;
 
 import java.util.ArrayList;
 

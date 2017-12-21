@@ -1,4 +1,4 @@
-package ub.mobile.ap.ubnav.base;
+package devfikr.skripsi.ubnav.djikstra.base;
 
 /**
  * Created by Aryo on 3/25/2017.

@@ -17,26 +17,33 @@ public class DatabaseContract {
     public static final class PointColumns implements BaseColumns {
         public static final String COLUMN_LAT = "lat";
         public static final String COLUMN_LNG = "lng";
+        public static final String COLUMN_PATH_CATEGORY = "pathCategory";
         public static final String COLUMN_GATES_CATEGORY = "category";
+        public static final String COLUMN_IN_OUT_CATEGORY = "inOutCategory";
     }
     public static final class PathColumns implements BaseColumns {
         public static final String COLUMN_START_POINT = "startPoint";
         public static final String COLUMN_END_POINT = "endPoint";
         public static final String COLUMN_CATEGORY = "category";
-
-        public static final String COLUMN_START_POINT_ID = "startPointId";
-        public static final String COLUMN_START_POINT_LAT = "startPointLat";
-        public static final String COLUMN_START_POINT_LNG = "startPointLng";
-        public static final String COLUMN_START_POINT_CATEGORY = "startPointCategory";
-
-        public static final String COLUMN_END_POINT_ID = "endPointId";
-        public static final String COLUMN_END_POINT_LAT = "endPointLat";
-        public static final String COLUMN_END_POINT_LNG = "endPointLng";
-        public static final String COLUMN_END_POINT_CATEGORY = "endPointCategory";
+        public static final String COLUMN_IN_OUT_CATEGORY = "inOutCategory";
+//
+//        public static final String COLUMN_START_POINT_ID = "startPointId";
+//        public static final String COLUMN_START_POINT_LAT = "startPointLat";
+//        public static final String COLUMN_START_POINT_LNG = "startPointLng";
+//        public static final String COLUMN_START_POINT_CATEGORY = "startPointCategory";
+//
+//        public static final String COLUMN_END_POINT_ID = "endPointId";
+//        public static final String COLUMN_END_POINT_LAT = "endPointLat";
+//        public static final String COLUMN_END_POINT_LNG = "endPointLng";
+//        public static final String COLUMN_END_POINT_CATEGORY = "endPointCategory";
 
         public static final int CATEGORY_WALKING = 0;
         public static final int CATEGORY_MOTORCYCLE = 1;
         public static final int CATEGORY_CAR = 2;
+
+        public static final int CATEGORY_INBOUND = 0;
+        public static final int CATEGORY_OUTBOUND = 1;
+        public static final int CATEGORY_ALLBOUND = 2;
     }
     public static final class GatesColumns implements BaseColumns {
         public static final String COLUMN_NAME = "name";

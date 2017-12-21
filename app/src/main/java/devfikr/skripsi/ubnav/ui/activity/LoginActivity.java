@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav.ui;
+package devfikr.skripsi.ubnav.ui.activity;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -43,7 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         if(auth != null){
-            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
         }
     }

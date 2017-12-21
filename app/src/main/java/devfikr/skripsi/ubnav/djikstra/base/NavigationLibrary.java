@@ -1,7 +1,7 @@
-package ub.mobile.ap.ubnav.base;
+package devfikr.skripsi.ubnav.djikstra.base;
 
-import ub.mobile.ap.ubnav.astar.AStar;
-import ub.mobile.ap.ubnav.dijkstra.Dijkstra;
+
+import devfikr.skripsi.ubnav.djikstra.Dijkstra;
 
 /**
  * Created by Aryo on 3/25/2017.
@@ -17,7 +17,7 @@ public class NavigationLibrary {
             case NavigationLibrary.DIJKSTRA:
                 return new Dijkstra();
             case NavigationLibrary.ASTAR:
-                return new AStar();
+//                return new AStar();
         }
         throw new Exception("Algorithm not supported exception");
     }

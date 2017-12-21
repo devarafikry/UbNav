@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav.command;
+package devfikr.skripsi.ubnav.commands.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -8,6 +8,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
+import devfikr.skripsi.ubnav.commands.callback.DeleteCommandCallback;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
@@ -27,8 +30,9 @@ public class DeletePointCommand implements Command {
     private View root_map;
     private Snackbar s;
     private int pathCategory;
+    private int inOutCategory;
 
-    public DeletePointCommand(View view, Snackbar s, DeleteCommandCallback deleteCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, int pathCategory) {
+    public DeletePointCommand(View view, Snackbar s, DeleteCommandCallback deleteCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, int pathCategory, int inOutCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -37,6 +41,7 @@ public class DeletePointCommand implements Command {
         this.root_map = view;
         this.s = s;
         this.pathCategory = pathCategory;
+        this.inOutCategory = inOutCategory;
     }
 
     @Override
@@ -72,12 +77,12 @@ public class DeletePointCommand implements Command {
         return null;
     }
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory, inOutCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.selectedPoint = addedPoint;
 
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, lastPointAfterDelete.getId(),
-                addedPoint.getId(), pathCategory), lastPointAfterDelete, addedPoint);
+                addedPoint.getId(), pathCategory, inOutCategory), lastPointAfterDelete, addedPoint);
     }
     public void addPath(long pathId, Point startPosition,
                         Point endPosition){
@@ -113,6 +118,7 @@ public class DeletePointCommand implements Command {
 //        selectedMarker = null;
 //        deletePathFromDb(mDbHelper, idPathToBeDeleted);
         new deletePathTask().execute(new Long[]{idPathToBeDeleted});
+        new deletePointTask().execute(new Long[]{id});
 //        new deletePointTask().execute(new Long[]{idPathToBeDeleted});
 //        deletePointFromDb(mDbHelper, id);
     }

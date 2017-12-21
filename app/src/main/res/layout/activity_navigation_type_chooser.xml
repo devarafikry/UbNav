@@ -1,10 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
+    android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="devfikr.skripsi.ubnav.ui.activity.NavigationTypeChooserActivity">
+    tools:context="devfikr.skripsi.ubnav.ui.activity.EditActivity">
 
-</android.support.constraint.ConstraintLayout>
+    <Button
+        android:id="@+id/btn_nav_walk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PEJALAN KAKI"/>
+
+    <Button
+        android:id="@+id/btn_nav_motor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="KENDARAAN BERMOTOR"/>
+
+    <Button
+        android:id="@+id/btn_nav_interchange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="KENDARAAN BERMOTOR DAN INTERCHANGE"/>
+
+</LinearLayout>
+
