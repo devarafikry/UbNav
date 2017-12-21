@@ -1,18 +1,15 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.command;
 
 import android.support.design.widget.Snackbar;
 import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 
 import java.util.ArrayList;
 
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
-
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.updatePointToDb;
 
 /**
  * Created by Fikry-PC on 11/16/2017.
@@ -30,8 +27,9 @@ public class UpdatePointCommand implements Command {
     private LatLng latLngEnd;
     private LatLng latLngStart;
     private Point draggedPoint;
+    private int pathCategory;
 
-    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd) {
+    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd, int pathCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -41,6 +39,7 @@ public class UpdatePointCommand implements Command {
         this.s = s;
         this.latLngEnd = latLngEnd;
         this.latLngStart = latLngStart;
+        this.pathCategory = pathCategory;
     }
 
     @Override
@@ -79,7 +78,7 @@ public class UpdatePointCommand implements Command {
     private void updatePoint(long selectedPointId, LatLng position) {
         Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
         draggedPoint = updatedPoint;
-        updatePointToDb(mDbHelper, selectedPointId, position);
+        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position, pathCategory);
         for (int i =0;i<points.size();i++){
             if (points.get(i).getId() == selectedPointId){
                 points.set(i, updatedPoint);

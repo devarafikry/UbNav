@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -11,10 +11,6 @@ import java.util.ArrayList;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
-
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.deletePathFromDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPathToDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPointToDb;
 
 /**
  * Created by Fikry-PC on 11/16/2017.
@@ -33,8 +29,9 @@ public class AddPointBetweenPathCommand implements Command {
     private Path selectedPath;
     private Path createdPath1;
     private Path createdPath2;
+    private int pathCategory;
 
-    public AddPointBetweenPathCommand(View view, Snackbar s, AddPointBetweenPathCallback addPointBetweenPathCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,Path selectedPath, LatLng latLng) {
+    public AddPointBetweenPathCommand(View view, Snackbar s, AddPointBetweenPathCallback addPointBetweenPathCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,Path selectedPath, LatLng latLng, int pathCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -44,6 +41,7 @@ public class AddPointBetweenPathCommand implements Command {
         this.s = s;
         this.selectedPath = selectedPath;
         this.latLng = latLng;
+        this.pathCategory = pathCategory;
     }
 
     @Override
@@ -58,8 +56,8 @@ public class AddPointBetweenPathCommand implements Command {
         new deletePathTask().execute(new Long[]{createdPath2.getId()});
         paths.remove(createdPath1);
         paths.remove(createdPath2);
-        long addedPathId = insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
-                selectedPath.getEndLocation().getId());
+        long addedPathId = DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
+                selectedPath.getEndLocation().getId(), pathCategory);
         addPath(addedPathId,
                 selectedPath.getStartLocation(), selectedPath.getEndLocation());
         for (Path path : paths){
@@ -91,7 +89,7 @@ public class AddPointBetweenPathCommand implements Command {
         return null;
     }
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(insertPointToDb(mDbHelper, latLng), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.addedPoint = addedPoint;
     }
@@ -118,13 +116,13 @@ public class AddPointBetweenPathCommand implements Command {
         Point addedPoint = points.get(points.size()-1);
 
 //        //insert path 1
-        addPath(insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
-                addedPoint.getId()),
+        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPath.getStartLocation().getId(),
+                addedPoint.getId(), pathCategory),
                 selectedPath.getStartLocation(), addedPoint);
         createdPath1 = paths.get(paths.size()-1);
 //        //insert path 2
-        addPath(insertPathToDb(mDbHelper, addedPoint.getId(),
-                selectedPath.getEndLocation().getId()),
+        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, addedPoint.getId(),
+                selectedPath.getEndLocation().getId(), pathCategory),
                 addedPoint, selectedPath.getEndLocation());
         createdPath2 = paths.get(paths.size()-1);
         selectedPoint = addedPoint;
@@ -134,7 +132,7 @@ public class AddPointBetweenPathCommand implements Command {
         @Override
         protected Long doInBackground(Long... longs) {
             long toBeDeletedId = longs[0];
-            return deletePathFromDb(mDbHelper, toBeDeletedId);
+            return DatabaseOperationHelper.deletePathFromDb(mDbHelper, toBeDeletedId);
         }
 
         @Override

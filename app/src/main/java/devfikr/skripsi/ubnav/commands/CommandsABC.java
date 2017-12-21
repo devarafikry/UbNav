@@ -1,6 +1,5 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.command;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 
@@ -13,12 +12,6 @@ import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
 import devfikr.skripsi.ubnav.util.SnackbarUtil;
-
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.deletePathFromDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.deletePointFromDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPathToDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPointToDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.updatePointToDb;
 
 /**
  * Created by Fikry-PC on 11/16/2017.
@@ -41,7 +34,7 @@ public class CommandsABC {
                 break;
             }
         }
-        deletePathFromDb(mDbHelper, id);
+        DatabaseOperationHelper.deletePathFromDb(mDbHelper, id);
 //        addPoint(points, latLng);
         Point addedPoint = points.get(points.size()-1);
 
@@ -56,15 +49,15 @@ public class CommandsABC {
         selectedPosition = addedPoint;
     }
 
-    private void updatePoint(ArrayList<Point> points, long selectedPointId, LatLng position) {
-        Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
-        updatePointToDb(mDbHelper, selectedPointId, position);
-        for (int i =0;i<points.size();i++){
-            if (points.get(i).getId() == selectedPointId){
-                points.set(i, updatedPoint);
-            }
-        }
-    }
+//    private void updatePoint(ArrayList<Point> points, long selectedPointId, LatLng position) {
+//        Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
+//        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position);
+//        for (int i =0;i<points.size();i++){
+//            if (points.get(i).getId() == selectedPointId){
+//                points.set(i, updatedPoint);
+//            }
+//        }
+//    }
     //point yang dapat dihapus adalah point yang tidak menjadi startNode pada suatu path
     public void deletePoint(ArrayList<Path> paths, ArrayList<Point> points) {
         long id = selectedPosition.getId();
@@ -89,8 +82,8 @@ public class CommandsABC {
 
         selectedPosition = null;
         selectedMarker = null;
-        deletePathFromDb(mDbHelper, idPathToBeDeleted);
-        deletePointFromDb(mDbHelper, id);
+        DatabaseOperationHelper.deletePathFromDb(mDbHelper, idPathToBeDeleted);
+        DatabaseOperationHelper.deletePointFromDb(mDbHelper, id);
     }
 
 

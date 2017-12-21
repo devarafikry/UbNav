@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.command;
 
 import java.util.ArrayList;
 

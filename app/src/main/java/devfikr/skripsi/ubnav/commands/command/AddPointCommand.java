@@ -1,4 +1,4 @@
-package devfikr.skripsi.ubnav;
+package devfikr.skripsi.ubnav.command;
 
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
@@ -13,81 +13,75 @@ import devfikr.skripsi.ubnav.model.Path;
 import devfikr.skripsi.ubnav.model.Point;
 import devfikr.skripsi.ubnav.util.SnackbarUtil;
 
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.deletePathFromDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.deletePointFromDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPathToDb;
-import static devfikr.skripsi.ubnav.DatabaseOperationHelper.insertPointToDb;
-
 /**
  * Created by Fikry-PC on 11/16/2017.
  */
 
-public class DeletePointCommand implements Command {
+public class AddPointCommand implements Command {
     private Point selectedPoint;
-    private Point lastPointAfterDelete;
     private DatabaseHelper mDbHelper;
     private ArrayList<Point> points;
     private ArrayList<Path> paths;
-    private DeleteCommandCallback deleteCommandCallback;
+    private LatLng latLng;
+    private Point addedPoint;
+    private AddCommandCallback addCommandCallback;
     private View root_map;
     private Snackbar s;
-
-    public DeletePointCommand(View view, Snackbar s, DeleteCommandCallback deleteCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint) {
-        this.mDbHelper = mDbHelper;
-        this.points = points;
-        this.paths = paths;
-        this.selectedPoint = selectedPoint;
-        this.deleteCommandCallback = deleteCommandCallback;
-        this.root_map = view;
-        this.s = s;
-    }
+    private int pathCategory;
 
     @Override
     public void execute() {
-        deletePoint(selectedPoint);
-        deleteCommandCallback.deleteCommandResult(points, paths, null);
+        addPoint(points, latLng);
+        addCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
     public void undo() {
-        addPoint(points, new LatLng(selectedPoint.getLatitude(), selectedPoint.getLongitude()));
-        deleteCommandCallback.deleteCommandResult(points, paths, selectedPoint);
+//        deletePoint(addedPoint.getId());
+        deletePoint(addedPoint);
+        addCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
     public void redo() {
-        deletePoint(selectedPoint);
-        deleteCommandCallback.deleteCommandResult(points, paths, null);
+        addPoint(points, latLng);
+        addCommandCallback.addCommandResult(points, paths, selectedPoint);
     }
 
     @Override
     public ArrayList<Path> getPaths() {
-        return null;
+        return paths;
     }
 
     @Override
     public ArrayList<Point> getPoints() {
-        return null;
+        return points;
     }
 
     @Override
     public Point getSelectedPosition() {
-        return null;
+        return selectedPoint;
     }
-    private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(insertPointToDb(mDbHelper, latLng), latLng.latitude, latLng.longitude);
-        points.add(addedPoint);
-        this.selectedPoint = addedPoint;
 
-        addPath(insertPathToDb(mDbHelper, lastPointAfterDelete.getId(),
-                addedPoint.getId()), lastPointAfterDelete, addedPoint);
+    public AddPointCommand(View view, Snackbar s, AddCommandCallback addCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory) {
+        this.mDbHelper = mDbHelper;
+        this.points = points;
+        this.latLng = latLng;
+        this.paths = paths;
+        this.selectedPoint = selectedPoint;
+        this.addCommandCallback = addCommandCallback;
+        this.root_map = view;
+        this.s = s;
+        this.pathCategory = pathCategory;
     }
-    public void addPath(long pathId, Point startPosition,
-                        Point endPosition){
-        Path path = new Path(pathId,startPosition,
-                endPosition
-        );
-        paths.add(path);
+
+    private void addPoint(ArrayList<Point> points, LatLng latLng){
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
+        points.add(addedPoint);
+        this.addedPoint = addedPoint;
+
+        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
+                addedPoint.getId(), pathCategory), selectedPoint, addedPoint);
     }
     public void deletePoint(Point pointToDelete) {
         long id = pointToDelete.getId();
@@ -107,8 +101,6 @@ public class DeletePointCommand implements Command {
                 pathToBeDeleted = path;
             }
         }
-        lastPointAfterDelete = pathToBeDeleted.getStartLocation();
-//        selectedPoint = lastPointAfterDelete
         paths.remove(pathToBeDeleted);
         points.remove(selectedPoint);
 
@@ -120,11 +112,19 @@ public class DeletePointCommand implements Command {
 //        deletePointFromDb(mDbHelper, id);
     }
 
+    public void addPath(long pathId, Point startPosition,
+                        Point endPosition){
+        Path path = new Path(pathId,startPosition,
+                endPosition
+        );
+        paths.add(path);
+    }
+
     private class deletePathTask extends AsyncTask<Long, Void, Long> {
         @Override
         protected Long doInBackground(Long... longs) {
             long toBeDeletedId = longs[0];
-            return deletePathFromDb(mDbHelper, toBeDeletedId);
+            return DatabaseOperationHelper.deletePathFromDb(mDbHelper, toBeDeletedId);
         }
 
         @Override
@@ -138,7 +138,7 @@ public class DeletePointCommand implements Command {
         @Override
         protected Long doInBackground(Long... longs) {
             long toBeDeletedId = longs[0];
-            return deletePointFromDb(mDbHelper, toBeDeletedId);
+            return DatabaseOperationHelper.deletePointFromDb(mDbHelper, toBeDeletedId);
         }
 
         @Override
@@ -147,4 +147,5 @@ public class DeletePointCommand implements Command {
 
         }
     }
+
 }

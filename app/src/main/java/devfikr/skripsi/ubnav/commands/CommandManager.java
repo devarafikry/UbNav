@@ -1,6 +1,4 @@
-package devfikr.skripsi.ubnav;
-
-import com.google.android.gms.maps.model.LatLng;
+package devfikr.skripsi.ubnav.command;
 
 import java.util.ArrayList;
 import java.util.Collections;
