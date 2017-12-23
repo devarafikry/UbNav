@@ -1,29 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:orientation="vertical"
+<GridLayout
+    android:layout_marginTop="10dp"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="devfikr.skripsi.ubnav.ui.activity.EditActivity">
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/GridLayout1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:layout_weight="1"
+            android:orientation="horizontal" >
 
-    <Button
+    <ImageView
+        android:padding="10dp"
         android:id="@+id/btn_edit_walk"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="175dp"
+        android:layout_height="175dp"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:src="@drawable/pejalan"
         android:text="PEJALAN KAKI"/>
 
-    <Button
+    <ImageView
+        android:padding="10dp"
+        android:src="@drawable/bermotor"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
         android:id="@+id/btn_edit_motor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="175dp"
+        android:layout_height="175dp"
         android:text="KENDARAAN BERMOTOR"/>
 
-    <Button
+    <ImageView
+        android:padding="10dp"
+        android:src="@drawable/interchange"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
         android:id="@+id/btn_add_interchange"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="175dp"
+        android:layout_height="175dp"
         android:text="TAMBAH INTERCHANGE"/>
 
     <!--<Button-->
@@ -31,4 +46,5 @@
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="wrap_content"-->
         <!--android:text="MOBIL"/>-->
-</LinearLayout>
+</GridLayout>
+

@@ -31,9 +31,8 @@ public class UpdatePointCommand implements Command {
     private LatLng latLngStart;
     private Point draggedPoint;
     private int pathCategory;
-    private int inOutCategory;
 
-    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd, int pathCategory, int inOutCategory) {
+    public UpdatePointCommand(View view, Snackbar s, UpdateCommandCallback updateCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint,LatLng latLngStart, LatLng latLngEnd, int pathCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -44,7 +43,6 @@ public class UpdatePointCommand implements Command {
         this.latLngEnd = latLngEnd;
         this.latLngStart = latLngStart;
         this.pathCategory = pathCategory;
-        this.inOutCategory = inOutCategory;
     }
 
     @Override
@@ -83,7 +81,7 @@ public class UpdatePointCommand implements Command {
     private void updatePoint(long selectedPointId, LatLng position) {
         Point updatedPoint = new Point(selectedPointId, position.latitude, position.longitude);
         draggedPoint = updatedPoint;
-        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position, pathCategory, inOutCategory);
+        DatabaseOperationHelper.updatePointToDb(mDbHelper, selectedPointId, position, pathCategory);
         for (int i =0;i<points.size();i++){
             if (points.get(i).getId() == selectedPointId){
                 points.set(i, updatedPoint);

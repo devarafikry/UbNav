@@ -40,7 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DatabaseContract.InterchangeColumns.COLUMN_LNG
     );
     private static final String SQL_CREATE_TABLE_POINTS = String.format("CREATE TABLE %s"
-                    +" (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s DOUBLE, %s DOUBLE, %s INTEGER DEFAULT 0, %s INTEGER DEFAULT 0, %s INTEGER DEFAULT 0," +
+                    +" (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s DOUBLE, %s DOUBLE, %s INTEGER DEFAULT 0, %s INTEGER DEFAULT 0," +
                     " FOREIGN KEY ("+ DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY+")" +
                     " REFERENCES "+DatabaseContract.TABLE_GATE +"(_ID)" +
                     ")",
@@ -49,11 +49,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DatabaseContract.PointColumns.COLUMN_LAT,
             DatabaseContract.PointColumns.COLUMN_LNG,
             DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY,
-            DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY,
-            DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY
+            DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY
     );
     private static final String SQL_CREATE_TABLE_PATHS = String.format("CREATE TABLE %s"
-                    +" (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER, %s INTEGER, %s INTEGER," +
+                    +" (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER, %s INTEGER," +
                     " FOREIGN KEY ("+ DatabaseContract.PathColumns.COLUMN_START_POINT+")" +
                     " REFERENCES "+DatabaseContract.TABLE_POINTS +"(_ID)," +
                     " FOREIGN KEY ("+ DatabaseContract.PathColumns.COLUMN_END_POINT+")" +
@@ -62,8 +61,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DatabaseContract.PathColumns._ID,
             DatabaseContract.PathColumns.COLUMN_START_POINT,
             DatabaseContract.PathColumns.COLUMN_END_POINT,
-            DatabaseContract.PathColumns.COLUMN_CATEGORY,
-            DatabaseContract.PathColumns.COLUMN_IN_OUT_CATEGORY
+            DatabaseContract.PathColumns.COLUMN_CATEGORY
     );
 
 
@@ -105,22 +103,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values1.put(DatabaseContract.PointColumns.COLUMN_LNG, gerbangVeteranMasuk.longitude);
         values1.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 1);
         values1.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, DatabaseContract.PathColumns.CATEGORY_WALKING);
-        values1.put(DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY, DatabaseContract.PathColumns.CATEGORY_ALLBOUND);
 
         ContentValues values2 = new ContentValues();
         values2.put(DatabaseContract.PointColumns.COLUMN_LAT, gerbangVeteranMasuk.latitude);
         values2.put(DatabaseContract.PointColumns.COLUMN_LNG, gerbangVeteranMasuk.longitude);
         values2.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 1);
         values2.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
-        values2.put(DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY, DatabaseContract.PathColumns.CATEGORY_INBOUND);
 
-        LatLng gedungRektorat = new LatLng(-7.952309, 112.613047);
-        ContentValues values3 = new ContentValues();
-        values3.put(DatabaseContract.PointColumns.COLUMN_LAT, gedungRektorat.latitude);
-        values3.put(DatabaseContract.PointColumns.COLUMN_LNG, gedungRektorat.longitude);
-        values3.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 1);
-        values3.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE);
-        values3.put(DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY, DatabaseContract.PathColumns.CATEGORY_OUTBOUND);
+
 //        ContentValues values = new ContentValues();
 //        values.put(TaskColumns.DESCRIPTION, mContext.getResources().getString(R.string.demo_task));
 //        values.put(TaskColumns.IS_COMPLETE, 0);
@@ -129,7 +119,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         db.insertOrThrow(DatabaseContract.TABLE_POINTS, null, values1);
         db.insertOrThrow(DatabaseContract.TABLE_POINTS, null, values2);
-        db.insertOrThrow(DatabaseContract.TABLE_POINTS, null, values3);
 
     }
 }

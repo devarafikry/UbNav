@@ -23,35 +23,32 @@ public class DatabaseOperationHelper {
         return db.delete(DatabaseContract.TABLE_POINTS, "_id="+id, null);
     }
 
-    public static long updatePointToDb(DatabaseHelper mDbHelper, long id, LatLng latLng, int pathCategory, int inOutCategory){
+    public static long updatePointToDb(DatabaseHelper mDbHelper, long id, LatLng latLng, int pathCategory){
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(DatabaseContract.PointColumns.COLUMN_LAT,latLng.latitude);
         cv.put(DatabaseContract.PointColumns.COLUMN_LNG,latLng.longitude);
         cv.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 0);
         cv.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, pathCategory);
-        cv.put(DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY, inOutCategory);
         return db.update(DatabaseContract.TABLE_POINTS, cv, "_id="+id, null);
     }
 
-    public static long insertPointToDb(DatabaseHelper mDbHelper, LatLng latLng, int pathCategory, int inOutCategory){
+    public static long insertPointToDb(DatabaseHelper mDbHelper, LatLng latLng, int pathCategory){
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(DatabaseContract.PointColumns.COLUMN_LAT,latLng.latitude);
         cv.put(DatabaseContract.PointColumns.COLUMN_LNG,latLng.longitude);
         cv.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 0);
         cv.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, pathCategory);
-        cv.put(DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY, inOutCategory);
         return db.insert(DatabaseContract.TABLE_POINTS, null, cv);
     }
 
-    public static long insertPathToDb(DatabaseHelper mDbHelper, long startPointId, long endPointId, int pathCategory, int inOutCategory){
+    public static long insertPathToDb(DatabaseHelper mDbHelper, long startPointId, long endPointId, int pathCategory){
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(DatabaseContract.PathColumns.COLUMN_START_POINT,startPointId);
         cv.put(DatabaseContract.PathColumns.COLUMN_END_POINT,endPointId);
         cv.put(DatabaseContract.PathColumns.COLUMN_CATEGORY, pathCategory);
-        cv.put(DatabaseContract.PathColumns.COLUMN_IN_OUT_CATEGORY, inOutCategory);
         return db.insert(DatabaseContract.TABLE_PATHS, null, cv);
     }
 

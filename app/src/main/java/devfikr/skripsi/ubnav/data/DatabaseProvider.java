@@ -15,9 +15,9 @@ import android.support.annotation.Nullable;
 
 public class DatabaseProvider extends ContentProvider{
     private static final int POINTS = 100;
-    private static final int POINTS_WITH_CATEGORY_AND_INOUT_ID = 101;
+    private static final int POINTS_WITH_CATEGORY_ID = 101;
 
-    private static final int PATHS_WITH_CATEGORY_AND_INOUT_ID = 200;
+    private static final int PATHS_WITH_CATEGORY_ID = 200;
     private static final int PATHS_WITH_ID = 201;
 
     private static final int GATES = 300;
@@ -34,15 +34,15 @@ public class DatabaseProvider extends ContentProvider{
                 DatabaseContract.TABLE_POINTS,
                 POINTS);
         sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
-                DatabaseContract.TABLE_POINTS + "/#"+"/#",
-                POINTS_WITH_CATEGORY_AND_INOUT_ID);
+                DatabaseContract.TABLE_POINTS + "/#",
+                POINTS_WITH_CATEGORY_ID);
 
 //        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
 //                DatabaseContract.TABLE_PATHS,
 //                PATHS);
         sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
-                DatabaseContract.TABLE_PATHS + "/#"+"/#",
-                PATHS_WITH_CATEGORY_AND_INOUT_ID);
+                DatabaseContract.TABLE_PATHS + "/#",
+                PATHS_WITH_CATEGORY_ID);
 
 //        sUriMatcher.addURI(DatabaseContract.CONTENT_AUTHORITY,
 //                DatabaseContract.TABLE_GATE,
@@ -74,7 +74,7 @@ public class DatabaseProvider extends ContentProvider{
         Cursor retCursor;
 
         switch (match){
-            case PATHS_WITH_CATEGORY_AND_INOUT_ID :
+            case PATHS_WITH_CATEGORY_ID:
 //                SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
 //                builder.setTables(
 //                        DatabaseContract.TABLE_PATHS+" JOIN "+DatabaseContract.TABLE_POINTS+
@@ -83,12 +83,9 @@ public class DatabaseProvider extends ContentProvider{
 //
 //                );
                 String path_category_id = uri.getPathSegments().get(1);
-                String path_category_in_out_id = uri.getPathSegments().get(2);
 
-                String mSelection = DatabaseContract.PathColumns.COLUMN_CATEGORY+"=?"
-                        +" AND "+
-                        DatabaseContract.PathColumns.COLUMN_IN_OUT_CATEGORY+"=?";
-                String mSelectionArgs[] = {path_category_id, path_category_in_out_id};
+                String mSelection = DatabaseContract.PathColumns.COLUMN_CATEGORY+"=?";
+                String mSelectionArgs[] = {path_category_id};
 
                 //COMPLEX QUERYYYYYYYY
 //                Cursor cursor = db.rawQuery(
@@ -139,14 +136,11 @@ public class DatabaseProvider extends ContentProvider{
                         null
                 );
                 return cursor1;
-            case POINTS_WITH_CATEGORY_AND_INOUT_ID:
+            case POINTS_WITH_CATEGORY_ID:
                 String point_category_id = uri.getPathSegments().get(1);
-                String point_category_in_out_id = uri.getPathSegments().get(2);
 
-                String mSelectionP = DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY+"=?"
-                        +" AND "+
-                        DatabaseContract.PointColumns.COLUMN_IN_OUT_CATEGORY+"=?";
-                String mSelectionArgsP[] = {point_category_id, point_category_in_out_id};
+                String mSelectionP = DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY+"=?";
+                String mSelectionArgsP[] = {point_category_id};
 
                 Cursor cursorP = db.query(
                         DatabaseContract.TABLE_POINTS,

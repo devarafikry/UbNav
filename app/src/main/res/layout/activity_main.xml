@@ -6,24 +6,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     tools:context="devfikr.skripsi.ubnav.ui.activity.MainActivity">
 
-    <TextView
-        android:id="@+id/btn_edit"
-        android:textSize="100sp"
+    <!--<ImageView-->
+        <!--android:layout_marginTop="25dp"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:src="@drawable/ublogo"-->
+        <!--android:layout_width="100dp"-->
+        <!--android:layout_height="100dp"/>-->
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="EDIT"/>
-    <TextView
-        android:id="@+id/btn_nav"
-        android:textSize="100sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="NAV"/>
-    <TextView
-        android:id="@+id/btn_setting"
-        android:textSize="100sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="SETT"/>
+        android:layout_height="wrap_content">
+        <ImageView
+            android:layout_weight="1"
+            android:id="@+id/btn_edit"
+            android:layout_margin="10dp"
+            android:layout_width="0dp"
+            android:src="@drawable/graf"
+            android:layout_height="wrap_content"/>
+        <ImageView
+            android:layout_weight="1"
+            android:id="@+id/btn_nav"
+            android:layout_margin="10dp"
+            android:layout_width="0dp"
+            android:src="@drawable/nav"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
 </LinearLayout>

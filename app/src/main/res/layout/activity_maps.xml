@@ -6,26 +6,54 @@
                                                  android:layout_height="match_parent"
                                                  android:background="#efefef"
                                                  >
+
     <fragment
               android:id="@+id/map"
               android:name="com.google.android.gms.maps.SupportMapFragment"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               tools:context="devfikr.skripsi.ubnav.ui.activity.MapsActivity"/>
+
+    <com.lapism.searchview.SearchView
+        android:visibility="gone"
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.lapism.searchview.SearchBehavior"/>
+    <LinearLayout
+        android:layout_gravity="bottom"
+        android:visibility="gone"
+        android:id="@+id/nav_interchange_panel"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <android.support.design.widget.FloatingActionButton
+        android:layout_gravity="right"
+        android:src="@drawable/motor"
+        android:visibility="visible"
+        app:backgroundTint="@drawable/fab_focused"
+        android:id="@+id/fab_motor"
+        android:onClick="activeMotor"
+        android:layout_margin="10dp"
+        android:layout_width="@dimen/floating_button_size"
+        android:layout_height="@dimen/floating_button_size"/>
+        <android.support.design.widget.FloatingActionButton
+            android:layout_gravity="right"
+            android:src="@drawable/car"
+            android:visibility="visible"
+            app:backgroundTint="@drawable/fab_focused"
+            android:id="@+id/fab_car"
+            android:onClick="activeCar"
+            android:layout_margin="10dp"
+            android:layout_width="@dimen/floating_button_size"
+            android:layout_height="@dimen/floating_button_size"/>
+
+    </LinearLayout>
     <LinearLayout
         android:id="@+id/edit_panel"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <!--<android.support.design.widget.FloatingActionButton-->
-            <!--android:src="@drawable/ic_save_white"-->
-            <!--android:id="@+id/fab_save"-->
-            <!--app:backgroundTint="@android:color/holo_red_light"-->
-            <!--android:onClick="exitWatchPath"-->
-            <!--android:visibility="visible"-->
-            <!--android:layout_margin="10dp"-->
-            <!--android:layout_width="@dimen/floating_button_size"-->
-            <!--android:layout_height="@dimen/floating_button_size"/>-->
         <android.support.design.widget.FloatingActionButton
             android:layout_gravity="right"
             android:src="@drawable/ic_undo"

@@ -67,7 +67,7 @@ public class AddPointCommand implements Command {
         return selectedPoint;
     }
 
-    public AddPointCommand(View view, Snackbar s, AddPointCommandCallback addPointCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory, int inOutCategory) {
+    public AddPointCommand(View view, Snackbar s, AddPointCommandCallback addPointCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.latLng = latLng;
@@ -81,12 +81,12 @@ public class AddPointCommand implements Command {
     }
 
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory, inOutCategory), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.addedPoint = addedPoint;
 
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                addedPoint.getId(), pathCategory, inOutCategory), selectedPoint, addedPoint);
+                addedPoint.getId(), pathCategory), selectedPoint, addedPoint);
     }
     public void deletePoint(Point pointToDelete) {
         long id = pointToDelete.getId();
@@ -107,13 +107,13 @@ public class AddPointCommand implements Command {
             }
         }
         paths.remove(pathToBeDeleted);
-        points.remove(selectedPoint);
+        points.remove(pointToDelete);
 
 //        pointToDelete = null;
 //        selectedMarker = null;
 //        deletePathFromDb(mDbHelper, idPathToBeDeleted);
         new deletePathTask().execute(new Long[]{idPathToBeDeleted});
-        new deletePointTask().execute(new Long[]{idPathToBeDeleted});
+        new deletePointTask().execute(new Long[]{id});
 //        deletePointFromDb(mDbHelper, id);
     }
 

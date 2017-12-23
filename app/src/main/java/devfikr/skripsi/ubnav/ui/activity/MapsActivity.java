@@ -11,6 +11,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -57,7 +59,7 @@ import devfikr.skripsi.ubnav.util.LatLngConverter;
 import devfikr.skripsi.ubnav.util.SnackbarUtil;
 import timber.log.Timber;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapClickListener,
         GoogleMap.OnPolylineClickListener,
         GoogleMap.OnMarkerDragListener,
@@ -86,12 +88,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Marker> markers = new ArrayList<>();
     private ArrayList<Polyline> polylines = new ArrayList<>();
 
-    private ArrayList<CreateHistory> undo_history = new ArrayList<>();
-    private ArrayList<CreateHistory> redo_history = new ArrayList<>();
-
-    //value of normal size of latlng (point)
-    private int latlngsNormalSize = 0;
-
     private boolean isEditNode = false;
     private boolean isEditPolyline = false;
     private static final int EDIT_POLYLINE = 80;
@@ -104,16 +100,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Point selectedPosition;
     //selected marker (the marker of selected position)
     private Marker selectedMarker;
-    private LatLng editedLatLng;
-    private Polyline editedPolyline;
-    private Snackbar snackbar;
     private LoaderManager.LoaderCallbacks<Cursor> pointsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> pathsLoaderCallback;
     private int LOADER_POINT_ID = 22;
     private int LOADER_PATH_ID = 33;
     public final static String KEY_PATH_TYPE = "pathTypeKey";
+    public static final String KEY_TITLE = "keyTitle";
+
     private int PATH_CATEGORY;
-    private int PATH_IN_OUT_CATEGORY;
 
     private CommandManager commandManager;
     @BindView(R.id.fab_add_marker) FloatingActionButton fab_add_marker;
@@ -146,6 +140,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         mToast = Toast.makeText(this, s, Toast.LENGTH_SHORT);
         mToast.show();
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void switchState(int i){
@@ -185,7 +188,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if(getIntent()!=null){
             PATH_CATEGORY = getIntent().getIntExtra(KEY_PATH_TYPE, DatabaseContract.PathColumns.CATEGORY_WALKING);
-            PATH_IN_OUT_CATEGORY = getIntent().getIntExtra(KEY_PATH_IN_OUT, DatabaseContract.PathColumns.CATEGORY_ALLBOUND);
+            String title = getIntent().getStringExtra(KEY_TITLE);
+            getSupportActionBar().setTitle(title);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         initPointsLoaderCallback();
         initPathsLoaderCallback();
@@ -202,8 +207,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 return new CursorLoader(
                         MapsActivity.this,
-                        ContentUris.withAppendedId(getPointUri,
-                                PATH_IN_OUT_CATEGORY),
+                        getPointUri,
                         null,
                         null,
                         null,
@@ -252,8 +256,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 return new CursorLoader(
                         MapsActivity.this,
-                        ContentUris.withAppendedId(getPathUri,
-                                PATH_IN_OUT_CATEGORY),
+                        getPathUri,
                         null,
                         null,
                         null,
@@ -377,7 +380,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         if(isAddMarker){
-            commandManager.doCommand(new AddOnePointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+            commandManager.doCommand(new AddOnePointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY));
             isAddMarker = false;
             fab_add_marker.setSelected(false);
         }
@@ -385,7 +388,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(selectedPosition == null){
                 SnackbarUtil.showSnackBar(root_map, snackbar,"Pilih point terlebih dahulu.", Snackbar.LENGTH_LONG);
             } else{
-                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY));
 
             }
         } else if(isEditPolyline){
@@ -396,7 +399,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     selectedPath = path;
                 }
             }
-            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng, PATH_CATEGORY));
         }
 
         }
@@ -581,7 +584,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        updatePoint(selectedPointId, marker.getPosition());
 
         commandManager.doCommand(new UpdatePointCommand(root_map, snackbar, this, mDbHelper, paths, points, selectedPosition,
-                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition(), PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition(), PATH_CATEGORY));
 
     }
 
@@ -603,8 +606,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     paths,
                     selectedPosition,
                     toJoinPoint,
-                    PATH_CATEGORY,
-                    PATH_IN_OUT_CATEGORY
+                    PATH_CATEGORY
             ));
             isJoinNode = false;
             marker.setTag(toJoinId);
@@ -641,7 +643,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void deletePoint(View view) {
 //        deletePoint();
-        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition, PATH_CATEGORY, PATH_IN_OUT_CATEGORY));
+        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition, PATH_CATEGORY));
     }
 
     private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){

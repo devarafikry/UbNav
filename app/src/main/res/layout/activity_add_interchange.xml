@@ -12,24 +12,6 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               tools:context="devfikr.skripsi.ubnav.ui.activity.MapsActivity"/>
-    <LinearLayout
-        android:id="@+id/edit_panel"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <android.support.design.widget.FloatingActionButton
-            android:layout_gravity="right"
-            android:src="@drawable/ic_clear"
-            android:visibility="visible"
-            app:backgroundTint="@android:color/holo_red_dark"
-            android:id="@+id/fab_clear"
-            android:onClick="deleteInterchange"
-            android:layout_margin="10dp"
-            android:layout_width="@dimen/floating_button_size"
-            android:layout_height="@dimen/floating_button_size"/>
-
-    </LinearLayout>
 
     <Button
         android:layout_margin="10dp"
@@ -43,5 +25,5 @@
         android:text="Finish"
         android:layout_gravity="right"/>
     <include
-        layout="@layout/bottom_sheet" />
+        layout="@layout/bottom_sheet_interchange_register" />
 </android.support.design.widget.CoordinatorLayout>

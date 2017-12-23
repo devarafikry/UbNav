@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="interchange_category">
+        <item>Kendaraan Motor</item>
+        <item>Kendaraan Mobil</item>
+        <item>Kendaraan Motor dan Mobil</item>
+    </string-array>
+</resources>

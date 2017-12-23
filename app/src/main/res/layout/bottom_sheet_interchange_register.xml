@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:id="@+id/bottom_sheet"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:background="#fff"
+              android:orientation="vertical"
+              android:padding="10dp"
+              app:behavior_hideable="true"
+              app:behavior_peekHeight="56dp"
+              app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
+
+    <EditText
+        android:id="@+id/edt_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nama"/>
+    <EditText
+        android:id="@+id/edt_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Deskripsi"/>
+    <android.support.v7.widget.CardView
+        android:layout_margin="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+        <Spinner
+            android:id="@+id/spn_category"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:entries="@array/interchange_category"
+            />
+    </android.support.v7.widget.CardView>
+    <Switch
+        android:id="@+id/sw_available"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ketersediaan"
+        android:enabled="true"/>
+    <Button
+        android:id="@+id/btn_submit"
+        android:onClick="submitInterchange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:background="@color/colorPrimary"
+        android:foreground="?attr/selectableItemBackground"
+        android:text="Daftarkan Interchange"
+        android:textColor="#fff" />
+    <Button
+        android:visibility="gone"
+        android:id="@+id/btn_update"
+        android:onClick="updateInterchange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:background="@color/colorAccent"
+        android:foreground="?attr/selectableItemBackground"
+        android:text="Update Interchange"
+        android:textColor="#fff" />
+    <Button
+        android:id="@+id/btn_delete"
+        android:onClick="deleteInterchange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/holo_red_dark"
+        android:foreground="?attr/selectableItemBackground"
+        android:text="Hapus Interchange"
+        android:visibility="gone"
+        android:textColor="#fff" />
+
+</LinearLayout>

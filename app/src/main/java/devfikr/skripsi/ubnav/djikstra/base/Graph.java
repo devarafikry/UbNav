@@ -51,9 +51,9 @@ public class Graph {
         Set<Point> setPoints = new HashSet<>();
         for(Point p: points) {
             for(Path path: paths) {
-                if(p.latitude == path.startPoint.latitude && p.longitude == path.startPoint.longitude)
-                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
-                else if(p.latitude == path.endPoint.latitude && p.longitude == path.endPoint.longitude)
+//                if(p.latitude == path.startPoint.latitude && p.longitude == path.startPoint.longitude)
+//                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));
+              if(p.latitude == path.endPoint.latitude && p.longitude == path.endPoint.longitude)
                     p.addDestination(findPoint(path.startPoint, points), Helper.calculateDistance(p, path.startPoint));
 //                if(p.id.equals(path.startPoint.id))
 //                    p.addDestination(findPoint(path.endPoint, points), Helper.calculateDistance(p, path.endPoint));

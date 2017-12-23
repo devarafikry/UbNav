@@ -1,20 +1,29 @@
 package devfikr.skripsi.ubnav.ui.activity;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.ContentUris;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -32,7 +41,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.lapism.searchview.SearchAdapter;
+import com.lapism.searchview.SearchFilter;
+import com.lapism.searchview.SearchHistoryTable;
+import com.lapism.searchview.SearchItem;
+import com.lapism.searchview.SearchView;
 
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +68,7 @@ import devfikr.skripsi.ubnav.util.LatLngConverter;
 import timber.log.Timber;
 
 public class NavigationActivity
- extends FragmentActivity implements OnMapReadyCallback,
+ extends AppCompatActivity implements OnMapReadyCallback,
          GoogleMap.OnMarkerClickListener,
          GoogleMap.OnMapClickListener{
     @BindView(R.id.bottom_sheet)
@@ -63,7 +78,8 @@ public class NavigationActivity
     @BindView(R.id.tv_distance) TextView tv_distance;
     @BindView(R.id.btn_direction) Button btn_direction;
     @BindView(R.id.edit_panel) LinearLayout edit_panel;
-
+    @BindView(R.id.searchView)
+    SearchView mSearchView;
     private GoogleMap mMap;
 
     //path arraylist for storing paths from db
@@ -81,13 +97,12 @@ public class NavigationActivity
     private Marker startMarker;
     private int LOADER_POINT_ID = 22;
     private int LOADER_PATH_ID = 33;
-    private int LOADER_OUTBOUND_POINT_ID = 44;
-    private int LOADER_OUTBOUND_PATH_ID = 55;
+
     private boolean isDebugMode = false;
     public static final String KEY_NAV_TYPE = "keyNavType";
-    public static final String KEY_PATH_IN_OUT = "keyPathInOut";
+    public static final String KEY_TITLE = "keyTitle";
     private int navCategory;
-    private int navInOutCategory;
+    private ArrayList<Marker> poiMarkers = new ArrayList<>();
 
     BottomSheetBehavior sheetBehavior;
     @Override
@@ -99,8 +114,11 @@ public class NavigationActivity
 
         if(getIntent() != null){
             navCategory = getIntent().getIntExtra(KEY_NAV_TYPE, DatabaseContract.PathColumns.CATEGORY_WALKING);
-            navInOutCategory = getIntent().getIntExtra(KEY_PATH_IN_OUT, DatabaseContract.PathColumns.CATEGORY_ALLBOUND);
+            String title = getIntent().getStringExtra(KEY_TITLE);
+            getSupportActionBar().setTitle(title);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+        mSearchView.setVisibility(View.VISIBLE);
         isDebugMode = sharedPreferences.getBoolean(getString(R.string.pref_debug_key),false);
         edit_panel.setVisibility(View.GONE);
         tv_name.setText("Silahkan pilih tujuan anda");
@@ -111,6 +129,7 @@ public class NavigationActivity
         initPointsLoaderCallback();
         initPathsLoaderCallback();
         sheetBehavior = BottomSheetBehavior.from(layoutBottomSheet);
+        sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         btn_direction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -120,7 +139,118 @@ public class NavigationActivity
             }
         });
 
+        final SearchHistoryTable mHistoryDatabase = new SearchHistoryTable(NavigationActivity.this);
 
+        if (mSearchView != null) {
+            mSearchView.setVersionMargins(SearchView.VersionMargins.TOOLBAR_SMALL);
+            mSearchView.setNavigationIcon(R.drawable.ic_search);
+            mSearchView.setNavigationIconClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mSearchView.open(true);
+                }
+            });
+            mSearchView.setNavigationIconAnimation(true);
+            mSearchView.setHint("Cari Tujuan...");
+            mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+//                    mHistoryDatabase.addItem(new SearchItem(query));
+                    mSearchView.close(false);
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    return false;
+                }
+            });
+
+            mSearchView.setOnOpenCloseListener(new SearchView.OnOpenCloseListener() {
+                @Override
+                public boolean onClose() {
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    return false;
+                }
+
+                @Override
+                public boolean onOpen() {
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    return false;
+                }
+            });
+
+            mSearchView.setVoiceText("Sebutkan tujuan anda...");
+            mSearchView.setOnVoiceIconClickListener(new SearchView.OnVoiceIconClickListener() {
+                @Override
+                public void onVoiceIconClick() {
+                    int permissionCheck = ContextCompat.checkSelfPermission(NavigationActivity.this,
+                            Manifest.permission.RECORD_AUDIO);
+                    if(permissionCheck == PackageManager.PERMISSION_DENIED){
+                        ActivityCompat.requestPermissions(NavigationActivity.this,
+                                new String[]{Manifest.permission.RECORD_AUDIO},
+                                88);
+                    }
+                }
+            });
+
+
+            List<SearchItem> suggestionsList = new ArrayList<>();
+            ArrayList<PointOfInterest> pois = ConstantLocationDataManager.fillPois();
+            for(int i=0;i<pois.size();i++){
+                suggestionsList.add(new SearchItem(pois.get(i).getName()));
+            }
+            SearchAdapter searchAdapter = new SearchAdapter(this, suggestionsList);
+
+            searchAdapter.setOnSearchItemClickListener(new SearchAdapter.OnSearchItemClickListener() {
+                @Override
+                public void onSearchItemClick(View view, int position, String text) {
+//                    mHistoryDatabase.addItem(new SearchItem(text));
+                    Timber.d("Selected: "+text);
+                    Marker selectedMarker = null;
+                    for (Marker marker : poiMarkers){
+                        if(marker.getTag() != null){
+                            if(marker.getTag().toString().equals(
+                                    text
+                            )){
+                                selectedMarker = marker;
+                            }
+                        }
+                    }
+                    getDirection(selectedMarker.getPosition());
+                    tv_name.setText(text);
+                    mSearchView.close(false);
+                }
+            });
+
+            mSearchView.setAdapter(searchAdapter);
+            searchAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SearchView.SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
+            ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (matches != null && matches.size() > 0) {
+                String searchWrd = matches.get(0);
+                if (!TextUtils.isEmpty(searchWrd)) {
+                    mSearchView.setQuery(searchWrd, false);
+                }
+            }
+
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void initPointsLoaderCallback(){
@@ -132,8 +262,7 @@ public class NavigationActivity
 
                 return new CursorLoader(
                         NavigationActivity.this,
-                        ContentUris.withAppendedId(getPointUri,
-                                navInOutCategory),
+                        getPointUri,
                         null,
                         null,
                         null,
@@ -180,6 +309,7 @@ public class NavigationActivity
             marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
             marker.setTag(poi.getName());
             marker.setTitle(poi.getName());
+            poiMarkers.add(marker);
         }
     }
 
@@ -365,7 +495,8 @@ public class NavigationActivity
                 BitmapDescriptorFactory.fromResource(R.drawable.ic_round_green), 20));
         polyline.setColor(getResources().getColor(android.R.color.holo_green_dark));
         LatLng latLng = polylineOptions.getPoints().get(polylineOptions.getPoints().size()-1);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,17));
+        float zoom = mMap.getCameraPosition().zoom;
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(destPoint.toLatLng(),zoom));
     }
 
     private void convertDjikstraResources(){
@@ -401,8 +532,7 @@ public class NavigationActivity
 
                 return new CursorLoader(
                         NavigationActivity.this,
-                        ContentUris.withAppendedId(getPathUri,
-                                navInOutCategory),
+                        getPathUri,
                         null,
                         null,
                         null,
@@ -464,6 +594,8 @@ public class NavigationActivity
     @Override
     public boolean onMarkerClick(Marker marker) {
         marker.showInfoWindow();
+        float zoom = mMap.getCameraPosition().zoom;
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(),zoom));
         tv_name.setText(marker.getTag().toString());
 //        tv_distance
         this.selectedLatLng = marker.getPosition();
@@ -507,7 +639,7 @@ public class NavigationActivity
     @Override
     public void onMapClick(LatLng latLng) {
         if(sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
-            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         } else{
             mMap.clear();
             generatePOI();

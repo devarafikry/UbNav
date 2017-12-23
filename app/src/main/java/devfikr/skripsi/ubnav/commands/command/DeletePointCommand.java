@@ -30,9 +30,8 @@ public class DeletePointCommand implements Command {
     private View root_map;
     private Snackbar s;
     private int pathCategory;
-    private int inOutCategory;
 
-    public DeletePointCommand(View view, Snackbar s, DeleteCommandCallback deleteCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, int pathCategory, int inOutCategory) {
+    public DeletePointCommand(View view, Snackbar s, DeleteCommandCallback deleteCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, int pathCategory) {
         this.mDbHelper = mDbHelper;
         this.points = points;
         this.paths = paths;
@@ -41,7 +40,6 @@ public class DeletePointCommand implements Command {
         this.root_map = view;
         this.s = s;
         this.pathCategory = pathCategory;
-        this.inOutCategory = inOutCategory;
     }
 
     @Override
@@ -77,12 +75,12 @@ public class DeletePointCommand implements Command {
         return null;
     }
     private void addPoint(ArrayList<Point> points, LatLng latLng){
-        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory, inOutCategory), latLng.latitude, latLng.longitude);
+        Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
         points.add(addedPoint);
         this.selectedPoint = addedPoint;
 
         addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, lastPointAfterDelete.getId(),
-                addedPoint.getId(), pathCategory, inOutCategory), lastPointAfterDelete, addedPoint);
+                addedPoint.getId(), pathCategory), lastPointAfterDelete, addedPoint);
     }
     public void addPath(long pathId, Point startPosition,
                         Point endPosition){
@@ -109,7 +107,7 @@ public class DeletePointCommand implements Command {
                 pathToBeDeleted = path;
             }
         }
-        lastPointAfterDelete = pathToBeDeleted.getStartLocation();
+
 //        selectedPoint = lastPointAfterDelete
         paths.remove(pathToBeDeleted);
         points.remove(selectedPoint);

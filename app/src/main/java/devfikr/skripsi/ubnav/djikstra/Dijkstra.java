@@ -68,15 +68,8 @@ public class Dijkstra implements IRoute {
                     currentPoint.getAdjacentPoints().entrySet()) {
                 Point adjacentPoint = adjacencyPair.getKey();
                 Double edgeWeight = adjacencyPair.getValue();
-                boolean isBackward = false;
-                for (Path path : paths){
-                    if(path.startPoint.id.equals(currentPoint.id)
-                            &&
-                            path.endPoint.id.equals(adjacentPoint.id)){
-                        isBackward = true;
-                    }
-                }
-                if (!settledPoints.contains(adjacentPoint) && !isBackward) {
+
+                if (!settledPoints.contains(adjacentPoint)) {
                     calculateMinimumDistanceVector(adjacentPoint, edgeWeight, currentPoint, paths);
                     unsettledPoints.add(adjacentPoint);
                 }
@@ -158,13 +151,6 @@ public class Dijkstra implements IRoute {
     private static void calculateMinimumDistanceVector(Point evaluationPoint,
                                                  Double edgeWeight, Point sourcePoint, ArrayList<Path> paths) {
         Double sourceDistance = sourcePoint.getDistance();
-//        boolean isBackward = false;
-//        for (int i=0;i<paths.size();i++){
-//            if(paths.get(i).startPoint.id.equals(sourcePoint.id)
-//                    && paths.get(i).endPoint.id.equals(evaluationPoint.id)){
-//                isBackward = true;
-//            }
-//        }
         if (sourceDistance + edgeWeight < evaluationPoint.getDistance()) {
             evaluationPoint.setDistance(sourceDistance + edgeWeight);
             LinkedList<Point> shortestPath = new LinkedList<>(sourcePoint.getShortestPath());
