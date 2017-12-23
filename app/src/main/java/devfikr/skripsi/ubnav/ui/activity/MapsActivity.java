@@ -100,6 +100,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point selectedPosition;
     //selected marker (the marker of selected position)
     private Marker selectedMarker;
+    private LatLng editedLatLng;
+    private Polyline editedPolyline;
+    private Snackbar snackbar;
     private LoaderManager.LoaderCallbacks<Cursor> pointsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> pathsLoaderCallback;
     private int LOADER_POINT_ID = 22;
