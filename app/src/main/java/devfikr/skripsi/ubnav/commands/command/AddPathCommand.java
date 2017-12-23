@@ -18,66 +18,49 @@ import devfikr.skripsi.ubnav.model.Point;
  */
 
 public class AddPathCommand implements Command {
-    private Point selectedPoint;
-    private DatabaseHelper mDbHelper;
-    private ArrayList<Point> points;
-    private ArrayList<Path> paths;
-    private Path addedPath;
+    private Point currentPoint;
     private Point toJoinPoint;
+    private DatabaseHelper mDbHelper;
+    private Path addedPath;
     private AddPathCommandCallback addPathCommand;
-    private View root_map;
-    private Snackbar s;
     private int pathCategory;
 
     @Override
     public void execute() {
-        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                toJoinPoint.getId(), pathCategory), selectedPoint, toJoinPoint);
-        addPathCommand.addPathCommandResult(paths, toJoinPoint.getId());
+        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, currentPoint.getId(),
+                toJoinPoint.getId(), pathCategory), currentPoint, toJoinPoint);
+        addPathCommand.addPathCommandExecuteResult(addedPath, toJoinPoint.getId());
     }
 
     @Override
     public void undo() {
         deletePath(addedPath);
-        addPathCommand.addPathCommandResult(paths, toJoinPoint.getId());
+        addPathCommand.addPathCommandUndoResult(addedPath, toJoinPoint.getId());
     }
 
     @Override
     public void redo() {
-        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, selectedPoint.getId(),
-                toJoinPoint.getId(), pathCategory), selectedPoint, toJoinPoint);
-        addPathCommand.addPathCommandResult(paths, toJoinPoint.getId());
+        addPath(DatabaseOperationHelper.insertPathToDb(mDbHelper, currentPoint.getId(),
+                toJoinPoint.getId(), pathCategory), currentPoint, toJoinPoint);
+        addPathCommand.addPathCommandExecuteResult(addedPath, toJoinPoint.getId());
     }
 
-    @Override
-    public ArrayList<Path> getPaths() {
-        return paths;
-    }
 
-    @Override
-    public ArrayList<Point> getPoints() {
-        return points;
-    }
-
-    @Override
-    public Point getSelectedPosition() {
-        return selectedPoint;
-    }
-
-    public AddPathCommand(View view, Snackbar s, AddPathCommandCallback addPathCommand, DatabaseHelper mDbHelper, ArrayList<Path> paths, Point selectedPoint, Point toJoinPoint, int pathCategory) {
+    public AddPathCommand(
+            AddPathCommandCallback addPathCommand,
+            DatabaseHelper mDbHelper,
+            Point currentPoint,
+            Point toJoinPoint,
+            int pathCategory) {
         this.mDbHelper = mDbHelper;
-        this.paths = paths;
         this.toJoinPoint = toJoinPoint;
-        this.selectedPoint = selectedPoint;
+        this.currentPoint = currentPoint;
         this.addPathCommand = addPathCommand;
-        this.root_map = view;
-        this.s = s;
         this.pathCategory = pathCategory;
     }
 
     public void deletePath(Path pathToDelete) {
         long id = pathToDelete.getId();
-        paths.remove(pathToDelete);
         new deletePathTask().execute(new Long[]{id});
     }
 
@@ -87,7 +70,6 @@ public class AddPathCommand implements Command {
                 endPosition
         );
         addedPath = path;
-        paths.add(path);
     }
 
     private class deletePathTask extends AsyncTask<Long, Void, Long> {

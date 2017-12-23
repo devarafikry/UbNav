@@ -1,5 +1,7 @@
 package devfikr.skripsi.ubnav.commands.callback;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 
 import devfikr.skripsi.ubnav.model.Path;
@@ -10,5 +12,6 @@ import devfikr.skripsi.ubnav.model.Point;
  */
 
 public interface UpdateCommandCallback {
-    void updateCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint, Point draggedPoint);
+    void updateCommandExecuteResult(Point updatedPoint, LatLng updatedLatLng);
+    void updateCommandUndoResult(Point recoveredPoint, LatLng updatedLatLng);
 }

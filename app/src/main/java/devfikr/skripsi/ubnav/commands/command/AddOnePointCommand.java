@@ -9,6 +9,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 
 import devfikr.skripsi.ubnav.commands.Command;
+import devfikr.skripsi.ubnav.commands.callback.AddOnePointCommandCallback;
 import devfikr.skripsi.ubnav.commands.callback.AddPointCommandCallback;
 import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
@@ -21,97 +22,49 @@ import devfikr.skripsi.ubnav.util.SnackbarUtil;
  */
 
 public class AddOnePointCommand implements Command {
-    private Point selectedPoint;
     private DatabaseHelper mDbHelper;
-    private ArrayList<Point> points;
-    private ArrayList<Path> paths;
     private LatLng latLng;
     private Point addedPoint;
-    private AddPointCommandCallback addPointCommandCallback;
-    private View root_map;
-    private Snackbar s;
+    private AddOnePointCommandCallback addOnePointCommandCallback;
     private int pathCategory;
 
     @Override
     public void execute() {
-        addPoint(points, latLng);
-        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addPoint(latLng);
+        addOnePointCommandCallback.addOnePointCommandExecuteResult(addedPoint);
     }
 
     @Override
     public void undo() {
-//        deletePoint(addedPoint.getId());
         deletePoint(addedPoint);
-        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addOnePointCommandCallback.addOnePointCommandUndoResult(addedPoint);
     }
 
     @Override
     public void redo() {
-        addPoint(points, latLng);
-        addPointCommandCallback.addCommandResult(points, paths, selectedPoint);
+        addPoint(latLng);
+        addOnePointCommandCallback.addOnePointCommandExecuteResult(addedPoint);
     }
 
-    @Override
-    public ArrayList<Path> getPaths() {
-        return paths;
-    }
-
-    @Override
-    public ArrayList<Point> getPoints() {
-        return points;
-    }
-
-    @Override
-    public Point getSelectedPosition() {
-        return selectedPoint;
-    }
-
-    public AddOnePointCommand(View view, Snackbar s, AddPointCommandCallback addPointCommandCallback, DatabaseHelper mDbHelper, ArrayList<Path> paths, ArrayList<Point> points, Point selectedPoint, LatLng latLng, int pathCategory) {
+    public AddOnePointCommand(
+            AddOnePointCommandCallback addOnePointCommandCallback,
+            DatabaseHelper mDbHelper,
+            LatLng latLng,
+            int pathCategory) {
         this.mDbHelper = mDbHelper;
-        this.points = points;
         this.latLng = latLng;
-        this.paths = paths;
-        this.selectedPoint = selectedPoint;
-        this.addPointCommandCallback = addPointCommandCallback;
-        this.root_map = view;
-        this.s = s;
+        this.addOnePointCommandCallback = addOnePointCommandCallback;
         this.pathCategory = pathCategory;
     }
 
-    private void addPoint(ArrayList<Point> points, LatLng latLng){
+    private void addPoint(LatLng latLng){
         Point addedPoint = new Point(DatabaseOperationHelper.insertPointToDb(mDbHelper, latLng, pathCategory), latLng.latitude, latLng.longitude);
-        points.add(addedPoint);
         this.addedPoint = addedPoint;
     }
     public void deletePoint(Point pointToDelete) {
         long id = pointToDelete.getId();
-        long idPathToBeDeleted = 0;
-        Path pathToBeDeleted = null;
-        for (Path path : paths){
-            if(path.getStartLocation().getId() ==
-                    id){
-                SnackbarUtil.showSnackBar(root_map, s,
-                        "Anda tidak bisa menghapus node ini", Snackbar.LENGTH_LONG);
-                return;
-            }
-
-            if(path.getEndLocation().getId() ==
-                    id){
-                idPathToBeDeleted = path.getId();
-                pathToBeDeleted = path;
-            }
-        }
-        paths.remove(pathToBeDeleted);
-        points.remove(pointToDelete);
-
-//        pointToDelete = null;
-//        selectedMarker = null;
-//        deletePathFromDb(mDbHelper, idPathToBeDeleted);
         new deletePointTask().execute(new Long[]{id});
-//        deletePointFromDb(mDbHelper, id);
     }
-
-
 
     private class deletePointTask extends AsyncTask<Long, Void, Long> {
         @Override

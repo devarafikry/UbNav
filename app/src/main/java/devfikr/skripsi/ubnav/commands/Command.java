@@ -13,8 +13,4 @@ public interface Command {
     void execute();
     void undo();
     void redo();
-
-    ArrayList<Path> getPaths();
-    ArrayList<Point> getPoints();
-    Point getSelectedPosition();
 }

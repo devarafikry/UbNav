@@ -10,5 +10,6 @@ import devfikr.skripsi.ubnav.model.Point;
  */
 
 public interface AddPointCommandCallback {
-    void addCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint);
+    void addCommandExecuteResult(Point addedPoint, Path addedPath);
+    void addCommandUndoResult(Point removedPoint, Path removedPath);
 }

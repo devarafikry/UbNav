@@ -10,5 +10,6 @@ import devfikr.skripsi.ubnav.model.Point;
  */
 
 public interface DeleteCommandCallback {
-    void deleteCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint);
+    void deleteCommandExecuteResult(Path removedPath, Point removedPoint, String message);
+    void deleteCommandUndoResult(Path recoveredPath, Point recoveredPoint);
 }

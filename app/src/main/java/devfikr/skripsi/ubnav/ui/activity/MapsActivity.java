@@ -1,6 +1,8 @@
 package devfikr.skripsi.ubnav.ui.activity;
 
 import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.design.widget.CoordinatorLayout;
@@ -11,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +36,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -50,6 +54,7 @@ import devfikr.skripsi.ubnav.commands.callback.DeleteCommandCallback;
 import devfikr.skripsi.ubnav.commands.command.DeletePointCommand;
 import devfikr.skripsi.ubnav.commands.callback.UpdateCommandCallback;
 import devfikr.skripsi.ubnav.commands.command.UpdatePointCommand;
+import devfikr.skripsi.ubnav.commands.helper.DatabaseOperationHelper;
 import devfikr.skripsi.ubnav.data.DatabaseContract;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
 import devfikr.skripsi.ubnav.model.CreateHistory;
@@ -93,15 +98,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int EDIT_POLYLINE = 80;
     private static final int EDIT_NODE = 90;
 
-    private int editedPolylineId;
     private boolean isJoinNode = false;
     private boolean isAddMarker = false;
     //selected position (the green point)
     private Point selectedPosition;
     //selected marker (the marker of selected position)
     private Marker selectedMarker;
-    private LatLng editedLatLng;
-    private Polyline editedPolyline;
+
     private Snackbar snackbar;
     private LoaderManager.LoaderCallbacks<Cursor> pointsLoaderCallback;
     private LoaderManager.LoaderCallbacks<Cursor> pathsLoaderCallback;
@@ -370,6 +373,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         marker.setTag(latlngid);
     }
 
+    private void removePointMarker(Point point){
+        LatLng latLng = new LatLng(point.getLatitude(), point.getLongitude());
+        long pointId = point.getId();
+        Marker toDeleteMarker = null;
+        for (Marker marker:markers){
+            if (Long.valueOf(marker.getTag().toString())
+                    == pointId){
+                toDeleteMarker = marker;
+            }
+        }
+        markers.remove(toDeleteMarker);
+        toDeleteMarker.remove();
+        selectedMarker = null;
+    }
+
     private void addVisualLatLng(long id,LatLng latLng){
         Point addedPoint =
                new Point(id, latLng.latitude, latLng.longitude);
@@ -383,7 +401,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
         if(isAddMarker){
-            commandManager.doCommand(new AddOnePointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY));
+            commandManager.doCommand(
+                    new AddOnePointCommand(
+                            this,
+                            mDbHelper,
+                            latLng,
+                            PATH_CATEGORY));
             isAddMarker = false;
             fab_add_marker.setSelected(false);
         }
@@ -391,7 +414,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(selectedPosition == null){
                 SnackbarUtil.showSnackBar(root_map, snackbar,"Pilih point terlebih dahulu.", Snackbar.LENGTH_LONG);
             } else{
-                commandManager.doCommand(new AddPointCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition, latLng, PATH_CATEGORY));
+                commandManager.doCommand(
+                        new AddPointCommand(
+                                this,
+                                mDbHelper,
+                                selectedPosition,
+                                latLng,
+                                PATH_CATEGORY));
 
             }
         } else if(isEditPolyline){
@@ -402,7 +431,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     selectedPath = path;
                 }
             }
-            commandManager.doCommand(new AddPointBetweenPathCommand(root_map, snackbar,this,mDbHelper, paths, points, selectedPosition,selectedPath, latLng, PATH_CATEGORY));
+            commandManager.doCommand(
+                    new AddPointBetweenPathCommand(
+                            this,
+                            mDbHelper,
+                            selectedPath,
+                            latLng,
+                            PATH_CATEGORY));
         }
 
         }
@@ -416,20 +451,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             selectedPosition = points.get(0);
             Timber.d("Cupu "+ points.get(0).getId());
             addPointMarker(selectedPosition, selectedPosition.getId(), true);
+            switchSelectedMarker(findMarker(selectedPosition));
         }
         for(int i =0;i<points.size();i++){
             boolean havePath = false;
             Point point = points.get(i);
             for (int j=0;j<paths.size();j++){
                 Path path = paths.get(j);
-                if(path.getStartLocation().getId() == point.getId() ||
-                        path.getEndLocation().getId() == point.getId()){
-                    havePath = true;
+                if(path.getStartLocation() != null){
+//                    if(path.getStartLocation().getId() == point.getId() ||
+//                            path.getEndLocation().getId() == point.getId()){
+//                        havePath = true;
+//                    }
+                } else{
+                    DatabaseOperationHelper.deletePathFromDb(mDbHelper, path.getId());
                 }
             }
-            if(!havePath){
-                addPointMarker(point, point.getId(), false);
-            }
+//            if(!havePath){
+//                addPointMarker(point, point.getId(), false);
+//            }
         }
         for(int i =0;i<paths.size();i++){
             Path path = paths.get(i);
@@ -438,11 +478,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             for (Marker marker : markers){
                 long pointId = Long.valueOf(marker.getTag().toString());
 //                Timber.d("Marker "+pointId+" aman");
-                if(path.getStartLocation().getId() == pointId){
-                    startPointMarkerCreated = true;
-                }
-                if (path.getEndLocation().getId() == pointId){
-                    endPointMarkerCreated = true;
+                if(path.getStartLocation() != null && path.getEndLocation() != null){
+                    if(path.getStartLocation().getId() == pointId){
+                        startPointMarkerCreated = true;
+                    }
+                    if (path.getEndLocation().getId() == pointId){
+                        endPointMarkerCreated = true;
+                    }
+                } else{
+                    DatabaseOperationHelper.deletePathFromDb(mDbHelper, path.getId());
                 }
             }
             if(!startPointMarkerCreated){
@@ -475,7 +519,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             polyline.setClickable(true);
             polyline.setTag(path.getId());
         }
-
+        switchState(EDIT_NODE);
     }
     private void generateVisualizationPolyline(){
         if(visualPolyline.size()>0){
@@ -522,6 +566,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMarkerDragStart(Marker marker) {
+        switchSelectedMarker(marker);
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         long selectedPointId = Long.valueOf(marker.getTag().toString());
         for (Point point : points){
@@ -535,11 +580,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMarkerDrag(Marker marker) {
         long selectedPointId = Long.valueOf(marker.getTag().toString());
         Timber.d("Visual Path Size:"+visualPaths.size());
-//        int lastPointId = points.size()-1;
 
-//        if(points.size()>latlngsNormalSize){
-//            points.remove(lastPointId);
-//        }
         Point draggedPoint = null;
         for (Point point : points){
             if (point.getId() == selectedPointId){
@@ -553,8 +594,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(path.getStartLocation().getId() == selectedPointId){
                 for (Point point : points){
                     if(point.getId()==selectedPointId){
-//                        Point draggedPoint = points.get(lastPointId);
-//                        path.setStartLocation(draggedPoint);
                         Path visualPath = new Path(
                                 path.getId(), draggedPoint, path.getEndLocation());
 
@@ -564,8 +603,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else if(path.getEndLocation().getId() ==selectedPointId){
                 for (Point point : points){
                     if(point.getId() == (selectedPointId)){
-//                        Point draggedPoint = points.get(lastPointId);
-//                        path.setStartLocation(draggedPoint);
                         Path visualPath = new Path(
                                 path.getId(), path.getStartLocation(), draggedPoint);
 
@@ -579,15 +616,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
-        long selectedPointId = Long.valueOf(marker.getTag().toString());
         selectedMarker = marker;
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-//        addPoint(marker.getPosition());
-        //update point di database
-//        updatePoint(selectedPointId, marker.getPosition());
-
-        commandManager.doCommand(new UpdatePointCommand(root_map, snackbar, this, mDbHelper, paths, points, selectedPosition,
-                new LatLng(selectedPosition.getLatitude(), selectedPosition.getLongitude()),marker.getPosition(), PATH_CATEGORY));
+        commandManager.doCommand(
+                new UpdatePointCommand(
+                        this,
+                        mDbHelper,
+                        selectedPosition,
+                new LatLng(
+                        selectedPosition.getLatitude(), selectedPosition.getLongitude()),
+                        marker.getPosition(),
+                        PATH_CATEGORY));
 
     }
 
@@ -602,11 +641,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             commandManager.doCommand(new AddPathCommand(
-                    root_map,
-                    snackbar,
                     this,
                     mDbHelper,
-                    paths,
                     selectedPosition,
                     toJoinPoint,
                     PATH_CATEGORY
@@ -629,7 +665,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         String markerTag = marker.getTag().toString();
         if(selectedMarker != null && marker!=null){
-//            Timber.d("d"+ selectedMarker.getTag().toString());
             if(!(selectedMarker.getTag().toString().equals(markerTag))){
                 selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
             }
@@ -646,40 +681,198 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void deletePoint(View view) {
 //        deletePoint();
-        commandManager.doCommand(new DeletePointCommand(root_map, snackbar, this,mDbHelper, paths, points, selectedPosition, PATH_CATEGORY));
+        commandManager.doCommand(new DeletePointCommand(
+                this,
+                mDbHelper,
+                selectedPosition,
+                paths,
+                PATH_CATEGORY));
     }
 
-    private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){
-        this.selectedPosition = selectedPoint;
-        this.points = points;
-        this. paths = paths;
+    private void generatePolylineFromPath(Path path){
+        PolylineOptions polylineOptions = new PolylineOptions();
+        polylineOptions.add(LatLngConverter.convertToGoogleLatLng(path.getStartLocation()))
+                .add(LatLngConverter.convertToGoogleLatLng(path.getEndLocation()));
+        Polyline polyline = mMap.addPolyline(polylineOptions);
+        polylines.add(polyline);
+        if(selectedPolyline != null){
+            if(path.getId() == selectedPolylineId){
+                selectedPolyline = polyline;
+            }
+        }
+        polyline.setStartCap( new CustomCap(
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_round_black), 20));
+        polyline.setClickable(true);
+        polyline.setTag(path.getId());
     }
-    private void updateValue(ArrayList<Path> paths){
-        this. paths = paths;
+
+    private void removePolylinePath(Path path){
+        Polyline toDeletePolyline = null;
+        for (Polyline polyline : polylines){
+            if (Long.valueOf(polyline.getTag().toString())
+                    == path.getId()){
+                toDeletePolyline = polyline;
+            }
+        }
+        if(toDeletePolyline != null){
+            polylines.remove(toDeletePolyline);
+            toDeletePolyline.remove();
+        }
+    }
+
+    private Marker findMarker(Point point){
+        Marker thisMarker = null;
+        if(markers != null && markers.size() > 0){
+            for (Marker marker : markers){
+                if (Long.valueOf(marker.getTag().toString())
+                        == point.getId()){
+                    thisMarker = marker;
+                }
+            }
+        }
+        return thisMarker;
     }
 
     @Override
-    public void addCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
-        updateValue(points, paths, selectedPoint);
-        Point addedPoint = points.get(points.size()-1);
-//                addPath(insertPathToDb(mDbHelper, selectedPosition.getId(), addedPoint.getId()),
-//                        selectedPosition, addedPoint);
+    public void addCommandExecuteResult(Point addedPoint, Path addedPath) {
+        this.points.add(addedPoint);
+        this.paths.add(addedPath);
         addPointMarker(addedPoint, addedPoint.getId(), true);
-        selectedPosition = addedPoint;
-
-//        addPointMarker(addedPoint, addedPoint.getId(),true);
-        generatePoint();
+        generatePolylineFromPath(addedPath);
+        switchSelectedMarker(findMarker(addedPoint));
     }
 
     @Override
-    public void deleteCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
-        updateValue(points, paths, selectedPoint);
-//        for (Point point : points){
-//            if(point.getId() == selec)
-//        }
-        selectedMarker = null;
-        selectedPoint = null;
-        generatePoint();
+    public void addCommandUndoResult(Point removedPoint, Path removedPath) {
+        removePointMarker(removedPoint);
+        removePolylinePath(removedPath);
+//        switchSelectedMarker(findMarker(removedPoint));
+    }
+
+    @Override
+    public void deleteCommandExecuteResult(Path removedPath, Point removedPoint, String message) {
+//        selectedMarker = null;
+        if(removedPoint==null){
+            if(message != null){
+                SnackbarUtil.showSnackBar(
+                        root_map,
+                        snackbar,
+                        "Anda tidak bisa menghapus node ini!",
+                        Snackbar.LENGTH_LONG
+                );
+            }
+        } else{
+            removePointMarker(removedPoint);
+            removePolylinePath(removedPath);
+        }
+    }
+
+    @Override
+    public void deleteCommandUndoResult(Path recoveredPath, Point recoveredPoint) {
+        addPointMarker(recoveredPoint, recoveredPoint.getId(), true);
+        generatePolylineFromPath(recoveredPath);
+    }
+
+    @Override
+    public void updateCommandExecuteResult(Point updatedPoint, LatLng updatedLatLng) {
+        Marker toMoveMarker = null;
+//        switchSelectedMarker(findMarker(updatedPoint));
+        for (Marker marker: markers){
+            if(Long.valueOf(marker.getTag().toString())
+                    == updatedPoint.getId()){
+                toMoveMarker = marker;
+            }
+        }
+        toMoveMarker.setPosition(updatedLatLng);
+
+        for (Point point : points){
+            if(point.getId() == updatedPoint.getId()){
+                point.setLatitude(updatedLatLng.latitude);
+                point.setLongitude(updatedLatLng.longitude);
+            }
+        }
+        ArrayList<Path> updatedPaths = new ArrayList<>();
+        for (Path path : paths){
+            if(path.getStartLocation().getId()
+                    == updatedPoint.getId() ||
+                    path.getEndLocation().getId() == updatedPoint.getId()){
+                updatedPaths.add(path);
+            }
+        }
+
+        for (Path path : updatedPaths){
+            ArrayList<Polyline> updatedPolylines = new ArrayList<>();
+            for (Polyline polyline : polylines){
+                if(Long.valueOf(polyline.getTag().toString())
+                        == path.getId()){
+                    updatedPolylines.add(polyline);
+                }
+            }
+
+            for (Polyline polyline : updatedPolylines){
+                polyline.remove();
+                polylines.remove(polyline);
+            }
+            generatePolylineFromPath(path);
+        }
+
+        visualPaths.clear();
+        for (Polyline polyline : visualPolyline){
+            polyline.remove();
+        }
+
+        switchSelectedMarker(findMarker(updatedPoint));
+    }
+
+    @Override
+    public void updateCommandUndoResult(Point recoveredPoint, LatLng updatedLatLng) {
+        Marker toMoveMarker = null;
+        switchSelectedMarker(findMarker(recoveredPoint));
+        for (Marker marker: markers){
+            if(Long.valueOf(marker.getTag().toString())
+                    == recoveredPoint.getId()){
+                toMoveMarker = marker;
+            }
+        }
+        toMoveMarker.setPosition(updatedLatLng);
+
+        for (Point point : points){
+            if(point.getId() == recoveredPoint.getId()){
+                point.setLatitude(updatedLatLng.latitude);
+                point.setLongitude(updatedLatLng.longitude);
+            }
+        }
+        ArrayList<Path> updatedPaths = new ArrayList<>();
+        for (Path path : paths){
+            if(path.getStartLocation().getId()
+                    == recoveredPoint.getId() ||
+                    path.getEndLocation().getId() == recoveredPoint.getId()){
+                updatedPaths.add(path);
+            }
+        }
+
+        for (Path path : updatedPaths){
+            ArrayList<Polyline> updatedPolylines = new ArrayList<>();
+            for (Polyline polyline : polylines){
+                if(Long.valueOf(polyline.getTag().toString())
+                        == path.getId()){
+                    updatedPolylines.add(polyline);
+                }
+            }
+
+            for (Polyline polyline : updatedPolylines){
+                polyline.remove();
+                polylines.remove(polyline);
+            }
+            generatePolylineFromPath(path);
+        }
+
+        visualPaths.clear();
+        for (Polyline polyline : visualPolyline){
+            polyline.remove();
+        }
+
+        switchSelectedMarker(findMarker(recoveredPoint));
     }
 
     public void undoPath(View view) {
@@ -691,54 +884,82 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void updateCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint, Point draggedPoint) {
-        updateValue(points, paths, selectedPoint);
-//        generatePoint();
-        Timber.d(selectedMarker.getId());
-//        long selectedPointId = selectedPoint.getId();
-long selectedPointId = draggedPoint.getId();
-//        switchSelectedMarker(selectedMarker);
-//        int lastLatLngsId = points.size()-1;
-//
-//        if(selectedPosition.getId()== selectedPointId){
-//            selectedPosition = points.get(lastLatLngsId);
-//        }
-        int i =0;
-        //implementasi kan visualisasi path ke path sebenarnya setelah di geser
-        for (Path path : paths){
-            if(path.getStartLocation().getId()==selectedPointId){
-                for (Point point : points){
-                    if(point.getId()==selectedPointId){
-//                        Point draggedPoint = points.get(lastLatLngsId);
-//                        path.setStartLocation(draggedPoint);
-                        Path visualPath = new Path(
-                                path.getId(), draggedPoint, path.getEndLocation());
-                        paths.set(i, visualPath);
-//                        visualPaths.add(visualPath);
-                    }
-                }
-            } else if(path.getEndLocation().getId()==selectedPointId){
-                for (Point point : points){
-                    if(point.getId()==selectedPointId){
-//                        Point draggedPoint = points.get(lastLatLngsId);
-//                        path.setStartLocation(draggedPoint);
-                        Path visualPath = new Path(
-                                path.getId(), path.getStartLocation(), draggedPoint);
-                        paths.set(i, visualPath);
-//                        visualPaths.add(visualPath);
-                    }
-                }
-            }
-            i++;
-        }
-        generatePoint();
+    public void addPointBetweenPathExecuteResult(Path removedPath, Path addedPath1, Path addedPath2, Point pointInBetween) {
+        this.points.add(pointInBetween);
+        this.paths.add(addedPath1);
+        this.paths.add(addedPath2);
+
+        addPointMarker(pointInBetween, pointInBetween.getId(), true);
+        removePolylinePath(removedPath);
+        generatePolylineFromPath(addedPath1);
+        generatePolylineFromPath(addedPath2);
+
+        selectedPolyline = null;
+        switchState(EDIT_NODE);
+        switchSelectedMarker(findMarker(pointInBetween));
+//        switchSelectedMarker(findMarker(pointInBetween));
     }
 
     @Override
-    public void addPointBetweenPathResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
-        updateValue(points, paths, selectedPoint);
+    public void addPointBetweenPathUndoResult(Path recoveredPath, Path deletedPath1, Path deletedPath2, Point deletedPointInBetween) {
+        this.points.remove(deletedPointInBetween);
+        this.paths.remove(deletedPath1);
+        this.paths.remove(deletedPath2);
+
+        removePointMarker(deletedPointInBetween);
+        removePolylinePath(deletedPath1);
+        removePolylinePath(deletedPath2);
+
+        generatePolylineFromPath(recoveredPath);
+    }
+
+
+    @Override
+    public void addPointBetweenPathRedoResult(Path removedPath, Path addedPath1, Path addedPath2, Point pointInBetween) {
+        this.points.add(pointInBetween);
+        this.paths.add(addedPath1);
+        this.paths.add(addedPath2);
+
+        addPointMarker(pointInBetween, pointInBetween.getId(), true);
+        removePolylinePath(removedPath);
+        generatePolylineFromPath(addedPath1);
+        generatePolylineFromPath(addedPath2);
+
+        selectedPolyline = null;
         switchState(EDIT_NODE);
-        generatePoint();
+        switchSelectedMarker(findMarker(pointInBetween));
+//        switchSelectedMarker(findMarker(pointInBetween));
+    }
+
+
+    @Override
+    public void addPathCommandExecuteResult(Path addedPath, long pointToId) {
+        generatePolylineFromPath(addedPath);
+        Marker selectedMarker = null;
+        for (Marker marker : markers){
+            if (Long.valueOf(marker.getTag().toString()) == pointToId){
+                selectedMarker = marker;
+            }
+        }
+
+        switchSelectedMarker(selectedMarker);
+    }
+
+    @Override
+    public void addPathCommandUndoResult(Path removedPath, long removedPointToId) {
+        removePolylinePath(removedPath);
+    }
+
+    @Override
+    public void addOnePointCommandExecuteResult(Point addedPoint) {
+        addPointMarker(addedPoint, addedPoint.getId(), true);
+        switchSelectedMarker(findMarker(addedPoint));
+        selectedPosition = addedPoint;
+    }
+
+    @Override
+    public void addOnePointCommandUndoResult(Point removedPoint) {
+        removePointMarker(removedPoint);
     }
 
     public void joinNode(View view) {
@@ -753,20 +974,6 @@ long selectedPointId = draggedPoint.getId();
         }
     }
 
-    @Override
-    public void addPathCommandResult(ArrayList<Path> paths, long pointToId) {
-        updateValue(paths);
-        generatePoint();
-        for(Marker marker:markers){
-            if (Long.valueOf(marker.getTag().toString()) == pointToId){
-                switchSelectedMarker(marker);
-            }
-        }
-    }
-
-    public void addPointBetweenPath(View view) {
-
-    }
 
     public void addMarker(View view) {
         if(isAddMarker){
@@ -780,9 +987,33 @@ long selectedPointId = draggedPoint.getId();
         }
     }
 
-    @Override
-    public void addOnePointCommandResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint) {
-        updateValue(points, paths, selectedPoint);
-        generatePoint();
+    public void resetPath(View view) {
+        final int pathCategory = PATH_CATEGORY;
+        String jenis = null;
+        switch (pathCategory){
+            case DatabaseContract.PathColumns.CATEGORY_WALKING:
+                jenis = "JALUR BERJALAN";
+                break;
+            case DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE:
+                jenis = "JALUR BERMOTOR";
+                break;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Hapus seluruh jalur di "+jenis+" ?");
+        builder.setMessage("Seluruh titik dan jalur akan dihapus dan tidak bisa dikembalikan.");
+        builder.setPositiveButton("Ya", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                DatabaseOperationHelper.deleteAllResources(mDbHelper, pathCategory);
+                getSupportLoaderManager().restartLoader(LOADER_POINT_ID, null, pointsLoaderCallback);
+            }
+        });
+        builder.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User cancelled the dialog
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }

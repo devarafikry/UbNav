@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import devfikr.skripsi.ubnav.data.DatabaseContract;
 import devfikr.skripsi.ubnav.data.DatabaseHelper;
+import devfikr.skripsi.ubnav.model.Path;
 
 /**
  * Created by Fikry-PC on 11/16/2017.
@@ -52,4 +53,22 @@ public class DatabaseOperationHelper {
         return db.insert(DatabaseContract.TABLE_PATHS, null, cv);
     }
 
+    public static void deleteAllResources(DatabaseHelper mDbHelper, int pathCategory){
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.delete(DatabaseContract.TABLE_POINTS,
+                DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY+"="+pathCategory,
+                null);
+        db.delete(DatabaseContract.TABLE_PATHS,
+                DatabaseContract.PathColumns.COLUMN_CATEGORY+"="+pathCategory,
+                null);
+
+        LatLng gerbangVeteranMasuk = new LatLng(-7.956213, 112.613298);
+
+        ContentValues values1 = new ContentValues();
+        values1.put(DatabaseContract.PointColumns.COLUMN_LAT, gerbangVeteranMasuk.latitude);
+        values1.put(DatabaseContract.PointColumns.COLUMN_LNG, gerbangVeteranMasuk.longitude);
+        values1.put(DatabaseContract.PointColumns.COLUMN_GATES_CATEGORY, 1);
+        values1.put(DatabaseContract.PointColumns.COLUMN_PATH_CATEGORY, pathCategory);
+        db.insertOrThrow(DatabaseContract.TABLE_POINTS, null, values1);
+    }
 }

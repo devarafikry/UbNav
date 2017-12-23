@@ -23,11 +23,11 @@ public class CommandManager {
     private ArrayList<Point> points;
     private ArrayList<Path> paths;
 
-    private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){
-        this.selectedPoint = selectedPoint;
-        this.points = points;
-        this. paths = paths;
-    }
+//    private void updateValue(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint){
+//        this.selectedPoint = selectedPoint;
+//        this.points = points;
+//        this. paths = paths;
+//    }
 
     public void doCommand(Command command){
         List<Command> newList = new ArrayList<>(nextPointer + 1);
@@ -44,7 +44,6 @@ public class CommandManager {
         // Do the command here, or return it to whatever called this to be done, or maybe it has already been done by now or something
         // (I can only guess on what your code currently looks like...)
         command.execute();
-        updateValue(command.getPoints(), command.getPaths(), command.getSelectedPosition());
     }
 
     public boolean canUndo() {

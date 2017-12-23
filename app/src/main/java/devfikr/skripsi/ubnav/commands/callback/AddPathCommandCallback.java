@@ -9,5 +9,6 @@ import devfikr.skripsi.ubnav.model.Path;
  */
 
 public interface AddPathCommandCallback {
-    void addPathCommandResult(ArrayList<Path> paths, long pointToId);
+    void addPathCommandExecuteResult(Path addedPath, long pointToId);
+    void addPathCommandUndoResult(Path removedPath, long removedPointToId);
 }

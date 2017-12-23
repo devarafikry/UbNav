@@ -10,5 +10,7 @@ import devfikr.skripsi.ubnav.model.Point;
  */
 
 public interface AddPointBetweenPathCommandCallback {
-    void addPointBetweenPathResult(ArrayList<Point> points, ArrayList<Path> paths, Point selectedPoint);
+    void addPointBetweenPathExecuteResult(Path removedPath, Path addedPath1, Path addedPath2, Point pointInBetween);
+    void addPointBetweenPathUndoResult(Path recoveredPath, Path deletedPath1, Path deletedPath2, Point deletedPointInBetween);
+    void addPointBetweenPathRedoResult(Path removedPath, Path addedPath1, Path addedPath2, Point pointInBetween);
 }
