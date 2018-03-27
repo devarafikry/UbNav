@@ -12,6 +12,7 @@ public class SnackbarUtil {
         if(snackbar != null){
             snackbar.dismiss();
         }
+
         snackbar = Snackbar.make(view, message, duration);
         snackbar.show();
     }

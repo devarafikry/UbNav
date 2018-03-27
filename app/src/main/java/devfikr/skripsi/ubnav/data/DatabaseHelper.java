@@ -16,7 +16,7 @@ import timber.log.Timber;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "ubgraf.db";
+    public static final String DATABASE_NAME = "ubgraf.db";
     private static final int DATABASE_VERSION = 1;
 
     private static final String SQL_CREATE_TABLE_GATES = String.format("CREATE TABLE %s"

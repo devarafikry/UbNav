@@ -336,15 +336,10 @@ public class NavigationActivity
         pointsSet
                 = Graph.build(djikstraPoints, djikstraPaths);
 
-//        pointDest.setDistance(Double.MAX_VALUE);
-//        for(devfikr.skripsi.ubnav.djikstra.base.Point point : pointsSet){
-//            point.addDestination(pointDest, Double.MAX_VALUE);
-//        }
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromStart =
                 getClosestNode(pointStart, pointsSet);
         devfikr.skripsi.ubnav.djikstra.base.Point closestPointFromDest =
                 getClosestNode(pointDest, pointsSet);
-//        closestPointFromDest.addDestination(pointDest, Double.MAX_VALUE);
         graph.setPoints(pointsSet);
         try {
             Timber.d("Djikstra point size :"+djikstraPoints.size());

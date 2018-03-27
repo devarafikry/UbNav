@@ -25,12 +25,10 @@ public class Dijkstra implements IRoute {
     public Graph calculateShortestPathFrom(Graph graph, Point source) throws Exception {
 
         source.setDistance(0D);
-//        destination.setDistance(0D);
 
         Set<Point> settledPoints = new HashSet<>();
         Set<Point> unsettledPoints = new HashSet<>();
         unsettledPoints.add(source);
-//        unsettledPoints.add(destination);
 
         while (unsettledPoints.size() != 0) {
             Point currentPoint = getLowestDistancePoint(unsettledPoints);

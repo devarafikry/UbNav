@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -16,6 +17,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -24,7 +26,8 @@ import devfikr.skripsi.ubnav.util.SnackbarUtil;
 
 public class LoginActivity extends AppCompatActivity {
 
-    FirebaseAuth auth = FirebaseAuth.getInstance();
+
+    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     @BindView(R.id.input_email)
     EditText input_email;
     @BindView(R.id.input_password)
@@ -33,7 +36,8 @@ public class LoginActivity extends AppCompatActivity {
     FrameLayout root_login;
     @BindView(R.id.progress_bar_login)
     ProgressBar progress_bar_login;
-
+    @BindView(R.id.error_message)
+    TextView error_message;
     Snackbar snackbar;
 
     @Override
@@ -42,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        if(auth != null){
+        if(user != null){
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
         }
@@ -52,11 +56,11 @@ public class LoginActivity extends AppCompatActivity {
         String email = input_email.getText().toString();
         String password = input_password.getText().toString();
         setLoading(true);
-        auth.signInWithEmailAndPassword(email,password)
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
                 .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                     @Override
                     public void onSuccess(AuthResult authResult) {
-                        Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(intent);
                     }
                 })
@@ -67,6 +71,8 @@ public class LoginActivity extends AppCompatActivity {
                                 snackbar,
                                 getString(R.string.fail_login),
                                 Snackbar.LENGTH_LONG);
+                        error_message.setText(getString(R.string.fail_login));
+                        error_message.setVisibility(View.VISIBLE);
                     }
                 })
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {

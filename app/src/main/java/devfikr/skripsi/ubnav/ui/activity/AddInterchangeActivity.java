@@ -58,8 +58,10 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
     private LoaderManager.LoaderCallbacks<Cursor> pointsLoaderCallback;
     private int LOADER_POINT_ID = 22;
     private int LOADER_PATH_ID = 33;
+    private  Marker selectedMarker;
     private LatLng selectedLatLng;
           BottomSheetBehavior sheetBehavior;
+
 
 
     @BindView(R.id.root_map)
@@ -268,9 +270,20 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
         }
     }
 
+    private void selectMarker(Marker marker){
+        if(selectedMarker != null) {
+            selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            selectedMarker = marker;
+            selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        } else{
+            selectedMarker = marker;
+            selectedMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        }
+    }
+
     @Override
     public void onMarkerDragStart(Marker marker) {
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        selectMarker(marker);
         long selectedInterchangeId = Long.valueOf(marker.getTag().toString());
     }
 
@@ -293,8 +306,8 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
         cv.put(DatabaseContract.InterchangeColumns.COLUMN_DESCRIPTION, interchange.getDescription());
         cv.put(DatabaseContract.InterchangeColumns.COLUMN_AVAILABLE, interchange.getAvailable());
         cv.put(DatabaseContract.InterchangeColumns.COLUMN_INTERCHANGE_CATEGORY, interchange.getCategory());
-        cv.put(DatabaseContract.InterchangeColumns.COLUMN_LAT, interchange.getLat());
-        cv.put(DatabaseContract.InterchangeColumns.COLUMN_LNG, interchange.getLng());
+        cv.put(DatabaseContract.InterchangeColumns.COLUMN_LAT, marker.getPosition().latitude);
+        cv.put(DatabaseContract.InterchangeColumns.COLUMN_LNG, marker.getPosition().longitude);
 
         mDbHelper.getWritableDatabase()
                 .update(
@@ -307,6 +320,8 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+        selectMarker(marker);
+
         if(isTyping){
             invalidateTyping();
         } else{
@@ -347,6 +362,8 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
                         new String[]{String.valueOf(toBeDeletedId)}
                 );
         toBeDeletedMarker.remove();
+        selectedMarker = null;
+        mMap.clear();
         getSupportLoaderManager().restartLoader(LOADER_POINT_ID, null, pointsLoaderCallback);
         invalidateTyping();
     }
@@ -384,6 +401,8 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
         );
         addInterchangeMarker(interchange);
         sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        selectedMarker = null;
+        mMap.clear();
         getSupportLoaderManager().restartLoader(LOADER_POINT_ID, null, pointsLoaderCallback);
         invalidateTyping();
     }
@@ -414,6 +433,8 @@ public class AddInterchangeActivity extends AppCompatActivity implements OnMapRe
                       );
 
               sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+              selectedMarker = null;
+              mMap.clear();
               getSupportLoaderManager().restartLoader(LOADER_POINT_ID, null, pointsLoaderCallback);
               invalidateTyping();
           }

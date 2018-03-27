@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -31,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-        getSupportActionBar().setTitle("UB Navigation Center");
+        getSupportActionBar().setTitle("Aplikasi Struktur Data Graf");
     }
 
     @Override
@@ -47,6 +49,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_setting:
                 Intent intent = new Intent(MainActivity.this, SettingActivity.class);
                 startActivity(intent);
+                break;
+            case R.id.action_logout:
+                FirebaseAuth.getInstance().signOut();
+                Intent intent1 = new Intent(MainActivity.this, LoginActivity.class);
+                intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent1);
                 break;
         }
         return super.onOptionsItemSelected(item);

@@ -12,4 +12,9 @@
     <string name="node_location">location</string>
 
     <string name="pref_debug_key">debugKey</string>
+
+    <string name="paths_json_name">paths</string>
+    <string name="points_json_name">points</string>
+    <string name="interchange_json_name">interchanges</string>
+
 </resources>

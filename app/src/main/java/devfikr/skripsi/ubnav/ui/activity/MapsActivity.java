@@ -514,8 +514,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     selectedPolyline = polyline;
                 }
             }
-            polyline.setStartCap( new CustomCap(
-                    BitmapDescriptorFactory.fromResource(R.drawable.ic_round_black), 20));
+            polyline.setEndCap( new CustomCap(
+                    BitmapDescriptorFactory.fromResource(getPolylineCaps()), 10));
+            polyline.setColor(getPolylineColor());
             polyline.setClickable(true);
             polyline.setTag(path.getId());
         }
@@ -535,8 +536,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Polyline polyline = mMap.addPolyline(polylineOptions);
             polyline.setColor(getResources().getColor(R.color.colorAccent));
             visualPolyline.add(polyline);
-            polyline.setStartCap( new CustomCap(
-                    BitmapDescriptorFactory.fromResource(R.drawable.ic_round_black), 20));
+            polyline.setEndCap( new CustomCap(
+                    BitmapDescriptorFactory.fromResource(R.drawable.ic_arrow_green), 10));
             polyline.setClickable(true);
         }
         visualPaths.clear();
@@ -680,7 +681,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     public void deletePoint(View view) {
-//        deletePoint();
         commandManager.doCommand(new DeletePointCommand(
                 this,
                 mDbHelper,
@@ -700,8 +700,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 selectedPolyline = polyline;
             }
         }
-        polyline.setStartCap( new CustomCap(
-                BitmapDescriptorFactory.fromResource(R.drawable.ic_round_black), 20));
+        polyline.setEndCap( new CustomCap(
+                BitmapDescriptorFactory.fromResource(getPolylineCaps()), 10));
+        polyline.setColor(getPolylineColor());
         polyline.setClickable(true);
         polyline.setTag(path.getId());
     }
@@ -746,6 +747,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void addCommandUndoResult(Point removedPoint, Path removedPath) {
         removePointMarker(removedPoint);
         removePolylinePath(removedPath);
+        selectedPosition = null;
 //        switchSelectedMarker(findMarker(removedPoint));
     }
 
@@ -936,6 +938,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void addPathCommandExecuteResult(Path addedPath, long pointToId) {
         generatePolylineFromPath(addedPath);
         Marker selectedMarker = null;
+        paths.add(addedPath);
         for (Marker marker : markers){
             if (Long.valueOf(marker.getTag().toString()) == pointToId){
                 selectedMarker = marker;
@@ -947,11 +950,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void addPathCommandUndoResult(Path removedPath, long removedPointToId) {
+        paths.remove(removedPath);
         removePolylinePath(removedPath);
     }
 
     @Override
     public void addOnePointCommandExecuteResult(Point addedPoint) {
+        points.add(addedPoint);
         addPointMarker(addedPoint, addedPoint.getId(), true);
         switchSelectedMarker(findMarker(addedPoint));
         selectedPosition = addedPoint;
@@ -1015,5 +1020,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private int getPolylineCaps(){
+        if(PATH_CATEGORY == DatabaseContract.PathColumns.CATEGORY_WALKING){
+            return R.drawable.ic_arrow_red;
+        } else if(PATH_CATEGORY == DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE){
+            return R.drawable.ic_arrow_blue;
+        } else{
+            return 0;
+        }
+    }
+    private int getPolylineColor(){
+        if(PATH_CATEGORY == DatabaseContract.PathColumns.CATEGORY_WALKING){
+            return getResources().getColor(android.R.color.holo_red_dark);
+        } else if(PATH_CATEGORY == DatabaseContract.PathColumns.CATEGORY_MOTORCYCLE){
+            return getResources().getColor(android.R.color.holo_blue_dark);
+        } else{
+            return 0;
+        }
     }
 }
