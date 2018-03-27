@@ -38,12 +38,7 @@
             android:name=".ui.activity.MapsActivity"
             android:label="@string/title_activity_maps">
         </activity>
-        <activity
-            android:name=".ui.activity.LoginActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="adjustResize">
 
-        </activity>
         <activity android:name=".ui.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
